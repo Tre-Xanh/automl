@@ -1,0 +1,8 @@
+name: h2o_mlflow
+channels:
+  - defaults
+dependencies:
+  - jupyter
+  - pytest
+  - black
+  - flake8

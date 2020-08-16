@@ -1,0 +1,6 @@
+name: h2o_mlflow
+conda_env: conda.yaml
+
+entry_points:
+    main:
+        command: "python main.py"

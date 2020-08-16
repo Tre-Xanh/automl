@@ -1,0 +1,14 @@
+name: h2o_mlflow
+channels:
+  - defaults
+  - anaconda
+  - conda-forge
+dependencies:
+  - openjdk
+  - pandas
+  - scikit-learn
+  - joblib
+  - pip
+  - pip:
+      - h2o
+      - mlflow
