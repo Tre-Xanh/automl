@@ -10,6 +10,9 @@ MLflow で実験のパラメータ、メトリックや学習済みモデルの�
 よって、このサンプルでは、前処理と学習・予測のパイプライン化に重点を置きます。
 また、MLflowで簡単に予測サービス(REST)を立ち上げられることについても少し触れます。
 
+ソースコードはこちら
+https://github.com/vochicong/h2o_mlflow
+
 ---
 
 # 概要
@@ -28,7 +31,7 @@ MLflow で実験のパラメータ、メトリックや学習済みモデルの�
 
 ``` bash
 conda env update -f conda-dev.yml
-conda env update -f h2o/conda.yaml
+conda env update -f src/conda.yaml
 
 conda activate h2o_mlflow
 python --version # Python 3.8.5 など
@@ -50,7 +53,7 @@ java -version # openjdk version "1.8.0_152-release" など
 前処理・機械学習・テスト予測の実行
 
 ``` bash
-mlflow run h2o
+mlflow run src
 ```
 
 ---
@@ -60,9 +63,14 @@ mlflow run h2o
 `mlflow run` コマンドが数分で終わると、予測APIの起動コマンド例が出力されるので、コピーして使えます。デフォルトで5000番ポートが使われます。
 
 ``` bash
-MODEL=/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmpu_840dh5/main.model
+export PRE_MODEL=/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmprjpjxzop/prep.model
+export H2O_MODEL=/private/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmp_vttg3fb/XGBoost_grid__1_AutoML_20200823_165516_model_8
+export MLFLOW_MODEL=/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmpe3kwn77z/main.model
+export PYTHONPATH=src
 
-mlflow models serve -m $MODEL
+pytest test/test.py::test_load_model
+
+mlflow models serve -m $MLFLOW_MODEL
 ```
 
 ## 予測API用Dockerイメージ
@@ -70,7 +78,7 @@ mlflow models serve -m $MODEL
 簡単に作れます
 
 ``` bash
-mlflow models build-docker -m $MODEL
+mlflow models build-docker -m $MLFLOW_MODEL
 ```
 
 ---
@@ -78,7 +86,8 @@ mlflow models build-docker -m $MODEL
 # 予測APIテスト
 
 ``` bash
-pytest h2o/test_api.py
+export PYTHONPATH=src
+pytest test/test.py::test_api
 ```
 
 同じテストデータにしたして、APIを使って予測させる場合と、

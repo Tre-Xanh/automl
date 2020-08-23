@@ -2,7 +2,9 @@ name: h2o_mlflow
 channels:
   - defaults
 dependencies:
+  - black
+  - coloredlogs
+  - flake8
+  - isort
   - jupyter
   - pytest
-  - black
-  - flake8
