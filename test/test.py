@@ -1,10 +1,12 @@
 import os
 
 import h2o
+import joblib
 import mlflow.pyfunc
 import numpy as np
 import pandas as pd
 import requests
+from h2o.frame import H2OFrame
 
 from config import logger
 from model import Preproc
@@ -30,8 +32,8 @@ def test_load_model():
     logger.info(f"predictions_mlflow\n{predictions_mlflow}")
     predictions_mlflow.to_csv("data/predictions_mlflow.csv", index=False)
 
-    pre_model = Preproc.load_model(PRE_MODEL)
-    hf_input = pre_model.transform(df_input)
+    pre_model = joblib.load(PRE_MODEL)
+    hf_input = H2OFrame(pre_model.transform(df_input))
     reloaded_h2o = h2o.load_model(H2O_MODEL)
     predictions_h2o = reloaded_h2o.predict(hf_input).as_data_frame()
     logger.info(f"predictions_h2o\n{predictions_h2o}")

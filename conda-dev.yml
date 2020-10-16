@@ -1,10 +1,14 @@
-name: h2o_mlflow
+name: automl
 channels:
   - defaults
+  - auto
 dependencies:
-  - black
-  - coloredlogs
-  - flake8
-  - isort
-  - jupyter
-  - pytest
+  - python=3.8
+  - pip
+  - pip:
+    - autoflake
+    - black
+    - flake8
+    - isort
+    - jupyter
+    - pytest

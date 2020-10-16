@@ -1,14 +1,20 @@
-name: h2o_mlflow
+name: automl
 channels:
   - defaults
   - anaconda
   - conda-forge
 dependencies:
+  - python=3.8
+  - bokeh==2.0.1
+  - joblib
+  - loguru
   - openjdk
   - pandas
   - scikit-learn
-  - joblib
   - pip
   - pip:
       - h2o
       - mlflow
+      - mxnet
+      - autogluon
+      - autogluon.tabular

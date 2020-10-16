@@ -11,7 +11,7 @@ MLflow で実験のパラメータ、メトリックや学習済みモデルの�
 また、MLflowで簡単に予測サービス(REST)を立ち上げられることについても少し触れます。
 
 ソースコードはこちら
-https://github.com/vochicong/h2o_mlflow
+https://github.com/vochicong/automl
 
 ---
 
@@ -31,9 +31,9 @@ https://github.com/vochicong/h2o_mlflow
 
 ``` bash
 conda env update -f conda-dev.yml
-conda env update -f src/conda.yaml
+conda env update -f conda.yml
 
-conda activate h2o_mlflow
+conda activate automl
 python --version # Python 3.8.5 など
 java -version # openjdk version "1.8.0_152-release" など
 ```
@@ -46,9 +46,8 @@ java -version # openjdk version "1.8.0_152-release" など
 
 * Preproc: データ前処理のクラス
   + Age, Fareの Min-Maxスケーリング
-  + Pandas DataFrame から H2OFrame への変換　
-* Learner: 機械学習のクラス
-* Predictor: 予測専用のクラス
+* h2o_fit: H2OAutoMLで学習
+* H2OPredictor: H2OAutoMLで予測
 
 前処理・機械学習・テスト予測の実行
 

@@ -1,4 +1,6 @@
 **/*.csv
 **/mlruns
-.DS_Store
-notebook/.ipynb_checkpoints/*-checkpoint.ipynb
+**/.DS_Store
+**/*-checkpoint.ipynb
+**/*.pyc
+tmp/*
