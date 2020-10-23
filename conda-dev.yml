@@ -4,6 +4,7 @@ channels:
   - auto
 dependencies:
   - python=3.8
+  - ipykernel
   - pip
   - pip:
     - autoflake

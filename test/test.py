@@ -8,12 +8,12 @@ import pandas as pd
 import requests
 from h2o.frame import H2OFrame
 
-from config import logger
+from config import TEST_CSV, logger
 from model import Preproc
 
 
 def test_load_model():
-    df_input = pd.read_csv("data/dftest.csv")
+    df_input = pd.read_csv(TEST_CSV)
 
     PRE_MODEL = os.getenv("PRE_MODEL")
     MLFLOW_MODEL = os.getenv("MLFLOW_MODEL")
@@ -43,7 +43,7 @@ def test_load_model():
 
 
 def test_api():
-    dftest = pd.read_csv("data/dftest.csv")
+    dftest = pd.read_csv(TEST_CSV)
     dftest.drop("Survived", axis="columns", inplace=True)
 
     data = dftest.to_json(orient="split", index=False)

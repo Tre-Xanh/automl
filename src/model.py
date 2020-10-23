@@ -16,7 +16,7 @@ from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-from config import DATA_URI, Y_TARGET, logger
+from config import DATA_URI, TEST_CSV, Y_TARGET, logger, PRJ_DIR
 
 
 class Preproc:
@@ -50,7 +50,7 @@ class Preproc:
 # import autogluon.core as ag
 from autogluon.tabular import TabularPrediction as task
 
-max_mins = 60
+max_mins = 1
 
 
 def gluon_fit(train: pd.DataFrame, test: pd.DataFrame) -> str:
@@ -143,7 +143,7 @@ def preprocess(csv=DATA_URI):
 
     # Save test dataframe for later tests
     Path("../data").mkdir(exist_ok=True)
-    dftest.to_csv("../data/dftest.csv", index=False)
+    dftest.to_csv(TEST_CSV, index=False)
 
     # %% データ前処理
     prep = Preproc()
@@ -200,8 +200,8 @@ def h2o_pipeline(train: pd.DataFrame, test: pd.DataFrame, pre_model: Preproc):
 export PRE_MODEL={pre_model}
 export H2O_MODEL={h2o_model}
 export MLFLOW_MODEL={mlflow_model}
-export PYTHONPATH={mlflow_model}/code/h2o_mlflow/src
-export TESTPATH={mlflow_model}/code/h2o_mlflow/test
+export PYTHONPATH={mlflow_model}/code/automl/src
+export TESTPATH={mlflow_model}/code/automl/test
 
 pytest $TESTPATH/test.py::test_load_model
 
@@ -213,9 +213,9 @@ pytest $TESTPATH/test.py::test_api
 
 def main():
     train, test, pre_model = preprocess()
-    gluon_pipeline(train, test, pre_model)
+    # gluon_pipeline(train, test, pre_model)
     h2o_pipeline(train, test, pre_model)
-    dai_pipeline(train, test, pre_model)
+    # dai_pipeline(train, test, pre_model)
 
 
 if __name__ == "__main__":
