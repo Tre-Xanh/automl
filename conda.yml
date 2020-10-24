@@ -4,17 +4,16 @@ channels:
   - anaconda
   - conda-forge
 dependencies:
-  - python=3.8
+  - python=3.6
   - bokeh==2.0.1
   - joblib
   - loguru
   - openjdk
+  - mlflow
   - pandas
   - scikit-learn
   - pip
   - pip:
       - h2o
-      - mlflow
       - mxnet
-      - autogluon
       - autogluon.tabular

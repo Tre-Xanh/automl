@@ -10,3 +10,5 @@ PRJ_DIR = Path(__file__).parents[1]
 DATA_DIR = PRJ_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 TEST_CSV = str(DATA_DIR / "dftest.csv")
+TMP_DIR = PRJ_DIR / "tmp"
+TMP_DIR.mkdir(exist_ok=True)

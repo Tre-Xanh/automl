@@ -3,7 +3,7 @@ channels:
   - defaults
   - auto
 dependencies:
-  - python=3.8
+  - python=3.6
   - ipykernel
   - pip
   - pip:

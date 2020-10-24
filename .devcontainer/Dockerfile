@@ -14,7 +14,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends gcc python3-dev
+    && apt-get -y install --no-install-recommends gcc make python3-dev
 
 RUN which conda && conda update -n base -c defaults conda
 COPY conda.yml ./

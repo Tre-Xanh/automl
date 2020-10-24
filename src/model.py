@@ -6,6 +6,7 @@ from pathlib import Path
 import h2o
 import joblib
 import mlflow
+from mlflow.entities import run
 import mlflow.h2o
 import mlflow.pyfunc
 import pandas as pd
@@ -16,7 +17,7 @@ from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-from config import DATA_URI, TEST_CSV, Y_TARGET, logger, PRJ_DIR
+from config import DATA_URI, TEST_CSV, TMP_DIR, Y_TARGET, logger, PRJ_DIR
 
 
 class Preproc:
@@ -194,21 +195,19 @@ def h2o_pipeline(train: pd.DataFrame, test: pd.DataFrame, pre_model: Preproc):
 
     mlflow.end_run()
 
-    # Log final model path
-    logger.info(
-        f"""### Test and run the saved model as ###
+    (TMP_DIR / "serve.sh").write_text(f"""
+export PYTHONPATH={mlflow_model}/code/automl/src
+export MLFLOW_MODEL={mlflow_model}
+mlflow models serve -m $MLFLOW_MODEL
+""")
+    (TMP_DIR / "test.sh").write_text(f"""
 export PRE_MODEL={pre_model}
 export H2O_MODEL={h2o_model}
 export MLFLOW_MODEL={mlflow_model}
 export PYTHONPATH={mlflow_model}/code/automl/src
 export TESTPATH={mlflow_model}/code/automl/test
-
-pytest $TESTPATH/test.py::test_load_model
-
-mlflow models serve -m $MLFLOW_MODEL
-pytest $TESTPATH/test.py::test_api
-"""
-    )
+pytest $TESTPATH/test.py
+""")
 
 
 def main():
