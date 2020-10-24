@@ -30,12 +30,7 @@ https://github.com/vochicong/automl
 [Conda](https://docs.conda.io/en/latest/miniconda.html)で環境作成
 
 ``` bash
-conda env update -f conda-dev.yml
-conda env update -f conda.yml
-
-conda activate automl
-python --version # Python 3.8.5 など
-java -version # openjdk version "1.8.0_152-release" など
+make devenv
 ```
 
 ---
@@ -52,24 +47,17 @@ java -version # openjdk version "1.8.0_152-release" など
 前処理・機械学習・テスト予測の実行
 
 ``` bash
-mlflow run src
+make train
 ```
 
 ---
 
 # 予測APIサービスの起動
 
-`mlflow run` コマンドが数分で終わると、予測APIの起動コマンド例が出力されるので、コピーして使えます。デフォルトで5000番ポートが使われます。
+デフォルトで5000番ポートが使われます。
 
 ``` bash
-export PRE_MODEL=/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmprjpjxzop/prep.model
-export H2O_MODEL=/private/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmp_vttg3fb/XGBoost_grid__1_AutoML_20200823_165516_model_8
-export MLFLOW_MODEL=/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmpe3kwn77z/main.model
-export PYTHONPATH=src
-
-pytest test/test.py::test_load_model
-
-mlflow models serve -m $MLFLOW_MODEL
+make serve
 ```
 
 ## 予測API用Dockerイメージ
@@ -85,11 +73,10 @@ mlflow models build-docker -m $MLFLOW_MODEL
 # 予測APIテスト
 
 ``` bash
-export PYTHONPATH=src
-pytest test/test.py::test_api
+make test
 ```
 
-同じテストデータにしたして、APIを使って予測させる場合と、
+同じテストデータに対して、APIを使って予測させる場合と、
 `main.py` でモデルを直接ロードして予測させる場合とを比較して、
 同じ予測結果になることを確認します
 

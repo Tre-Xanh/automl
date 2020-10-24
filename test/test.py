@@ -15,8 +15,8 @@ from model import Preproc
 def test_load_model():
     df_input = pd.read_csv(TEST_CSV)
 
-    PRE_MODEL = os.getenv("PRE_MODEL")
     MLFLOW_MODEL = os.getenv("MLFLOW_MODEL")
+    PRE_MODEL = os.getenv("PRE_MODEL")
     H2O_MODEL = os.getenv("H2O_MODEL")
     logger.info(
         f"""Model paths:
@@ -30,14 +30,12 @@ def test_load_model():
     reloaded_mlflow = mlflow.pyfunc.load_model(MLFLOW_MODEL)
     predictions_mlflow: pd.DataFrame = reloaded_mlflow.predict(df_input)
     logger.info(f"predictions_mlflow\n{predictions_mlflow}")
-    predictions_mlflow.to_csv("data/predictions_mlflow.csv", index=False)
 
     pre_model = joblib.load(PRE_MODEL)
     hf_input = H2OFrame(pre_model.transform(df_input))
     reloaded_h2o = h2o.load_model(H2O_MODEL)
     predictions_h2o = reloaded_h2o.predict(hf_input).as_data_frame()
     logger.info(f"predictions_h2o\n{predictions_h2o}")
-    predictions_mlflow.to_csv("data/predictions_h2o.csv", index=False)
 
     assert predictions_h2o.equals(predictions_mlflow)
 

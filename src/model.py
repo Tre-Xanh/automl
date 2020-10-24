@@ -17,7 +17,7 @@ from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-from config import DATA_URI, TEST_CSV, TMP_DIR, Y_TARGET, logger, PRJ_DIR
+from .config import DATA_URI, PROCESSED_DATA_DIR, TEST_CSV, TMP_DIR, Y_TARGET, logger, PRJ_DIR
 
 
 class Preproc:
@@ -42,8 +42,8 @@ class Preproc:
         self.fit(df)
         return self.transform(df)
 
-    def save_model(self) -> str:
-        model_path = os.path.join(tempfile.mkdtemp(), "prep.model")
+    def save_model(self, model_path=None) -> str:
+        model_path = model_path or os.path.join(tempfile.mkdtemp(), "prep.model")
         joblib.dump(self, model_path)
         return model_path
 
@@ -149,8 +149,10 @@ def preprocess(csv=DATA_URI):
     # %% データ前処理
     prep = Preproc()
     train = prep.fit_transform(dftrain)
-    pre_model = prep.save_model()
+    pre_model = prep.save_model(PROCESSED_DATA_DIR/"prep.model")
     test = prep.transform(dftest)
+    train.to_csv(PROCESSED_DATA_DIR/"train.csv", index=False)
+    test.to_csv(PROCESSED_DATA_DIR/"test.csv", index=False)
     return train, test, pre_model
 
 
@@ -159,14 +161,21 @@ def gluon_pipeline(train: pd.DataFrame, test: pd.DataFrame, pre_model: Preproc):
     gluon_fit(train, test)
     mlflow.end_run()
 
+def read_processed_data():
+    train = pd.read_csv(PROCESSED_DATA_DIR/"train.csv")
+    test = pd.read_csv(PROCESSED_DATA_DIR/"test.csv")
+    pre_model = str(PROCESSED_DATA_DIR/"prep.model")
+    return train, test, pre_model
 
-def h2o_pipeline(train: pd.DataFrame, test: pd.DataFrame, pre_model: Preproc):
+def train_h2o():
     """A pipeline to
     - Read CSV and preprocess data
     - Train using H2OAutoML
     - Save trained models
     """
     mlflow.start_run()
+    train, test, pre_model = read_processed_data()
+
     # %% 機械学習 AutoML
     h2o.init()
     h2o_model = h2o_fit(H2OFrame(train), H2OFrame(test))
@@ -195,27 +204,22 @@ def h2o_pipeline(train: pd.DataFrame, test: pd.DataFrame, pre_model: Preproc):
 
     mlflow.end_run()
 
-    (TMP_DIR / "serve.sh").write_text(f"""
-export PYTHONPATH={mlflow_model}/code/automl/src
-export MLFLOW_MODEL={mlflow_model}
-mlflow models serve -m $MLFLOW_MODEL
-""")
-    (TMP_DIR / "test.sh").write_text(f"""
-export PRE_MODEL={pre_model}
-export H2O_MODEL={h2o_model}
-export MLFLOW_MODEL={mlflow_model}
-export PYTHONPATH={mlflow_model}/code/automl/src
-export TESTPATH={mlflow_model}/code/automl/test
-pytest $TESTPATH/test.py
+    pre_model = Path(mlflow_model) / "artifacts" / os.path.basename(pre_model)
+    h2o_model = Path(mlflow_model) / "artifacts" / os.path.basename(h2o_model)
+    (TMP_DIR / "run_env.sh").write_text(f"""
+set -a
+MLFLOW_MODEL={mlflow_model}
+PRE_MODEL={pre_model}
+H2O_MODEL={h2o_model}
+PYTHONPATH={mlflow_model}/code/automl/src
+TESTPATH={mlflow_model}/code/automl/test
 """)
 
 
-def main():
-    train, test, pre_model = preprocess()
-    # gluon_pipeline(train, test, pre_model)
-    h2o_pipeline(train, test, pre_model)
-    # dai_pipeline(train, test, pre_model)
+def train_autogluon():
+    train, test, pre_model = read_processed_data()
+    gluon_pipeline(train, test, pre_model)
 
 
 if __name__ == "__main__":
-    main()
+    train_h2o()
