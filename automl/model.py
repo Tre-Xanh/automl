@@ -12,6 +12,7 @@ import pandas as pd
 from h2o import H2OFrame
 from h2o.automl import H2OAutoML
 from h2o.frame import H2OFrame
+from loguru import logger
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -23,7 +24,6 @@ from automl.config import (
     TEST_CSV,
     TMP_DIR,
     Y_TARGET,
-    logger,
     max_mins,
 )
 
@@ -43,7 +43,7 @@ class Preproc:
         df = df.drop("Name", axis="columns")
         logger.debug(f"MinMaxScaler transform {self.SCALE_COLS}")
         df[self.SCALE_COLS] = self.scaler.transform(df[self.SCALE_COLS])
-        logger.debug(f"df info\n{df.describe()}")
+        logger.debug(f"df head\n{df.head()}")
         return df
 
     def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -90,19 +90,15 @@ def h2o_fit(train: H2OFrame, test: H2OFrame) -> str:
 
 class H2OPredictor(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
-
         h2o.init()
         logger.info(f"artifacts {context.artifacts}")
-        self.h2o_model = h2o.load_model(context.artifacts["h2o_model"])
         self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
+        self.ml_model = h2o.load_model(context.artifacts["ml_model"])
 
-    def predict(self, context, df_input: DataFrame):
-        # Convert input from Pandas
+    def predict(self, context, df_input: DataFrame) -> pd.DataFrame:
         hf_input = H2OFrame(self.pre_model.transform(df_input))
-        output: H2OFrame = self.h2o_model.predict(hf_input)
-
-        # Convert output to Pandas
-        return output.as_data_frame()
+        output: H2OFrame = self.ml_model.predict(hf_input)
+        return output.as_data_frame()["p0"].values
 
 
 def preprocess(csv=DATA_URI):
@@ -146,27 +142,32 @@ def train_h2o():
 
     # %% 機械学習 AutoML
     h2o.init()
-    h2o_model = h2o_fit(H2OFrame(train), H2OFrame(test))
+    ml_model = h2o_fit(H2OFrame(train), H2OFrame(test))
 
+    log_model(pre_model, ml_model, H2OPredictor())
+
+
+def log_model(pre_model, ml_model, python_model):
     # %% MLflowで学習済みの前処理・モデルを保存
     conda_env = "./conda.yml"
-    code_path = ["automl"]  # 重要：ローカル Python ソースコードの所在地
+    code_path = ["automl", "test"]  # 重要：ローカル Python ソースコードの所在地
     artifacts = dict(
         pre_model=pre_model,
         #
-        h2o_model=h2o_model,
+        ml_model=ml_model,
     )
 
     artifact_path = "pyfunc"
     logger.debug(f"mlflow.pyfunc.log_model {artifacts} ... ")
-    mlflow.pyfunc.log_model(
+    mlflow_model_info = dict(
         artifact_path=artifact_path,
-        python_model=H2OPredictor(),
+        python_model=python_model,
         code_path=code_path,
         artifacts=artifacts,
         conda_env=conda_env,
     )
-    logger.debug(f"mlflow.pyfunc.log_model ... DONE")
+    mlflow.pyfunc.log_model(**mlflow_model_info)
+    logger.info(f"mlflow log_model {mlflow_model_info}")
     mlflow_model = mlflow.get_artifact_uri(artifact_path)
     prefix = "file://"
     if mlflow_model.startswith(prefix):
@@ -175,34 +176,53 @@ def train_h2o():
     mlflow.end_run()
 
     pre_model = Path(mlflow_model) / "artifacts" / os.path.basename(pre_model)
-    h2o_model = Path(mlflow_model) / "artifacts" / os.path.basename(h2o_model)
+    ml_model = Path(mlflow_model) / "artifacts" / os.path.basename(ml_model)
     (TMP_DIR / "run_env.sh").write_text(
         f"""
 set -a
 MLFLOW_MODEL={mlflow_model}
 PRE_MODEL={pre_model}
-H2O_MODEL={h2o_model}
+ML_MODEL={ml_model}
 PYTHONPATH={mlflow_model}/code
-TESTPATH={mlflow_model}/code/automl/test
+TESTPATH={mlflow_model}/code/test
 """
     )
 
 
 def train_autogluon():
-    from autogluon.tabular import TabularPrediction as task
-
     mlflow.start_run()
     train, test, pre_model = read_processed_data()
+    ml_model = fit_autogluon(train, test)
+    log_model(pre_model, ml_model, AutoGluonPredictor())
+    mlflow.end_run()
+
+
+class AutoGluonPredictor(mlflow.pyfunc.PythonModel):
+    def load_context(self, context):
+        from autogluon.tabular import TabularPrediction as task
+
+        logger.info(f"artifacts {context.artifacts}")
+        self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
+        self.ml_model = task.load(context.artifacts["ml_model"])
+
+    def predict(self, context, input: DataFrame) -> pd.DataFrame:
+        input = self.pre_model.transform(input)
+        output = self.ml_model.predict_proba(input)
+        return output
+
+
+def fit_autogluon(train: pd.DataFrame, test: pd.DataFrame) -> str:
+    from autogluon.tabular import TabularPrediction as task
 
     train = task.Dataset(train)
     logger.debug(train.head())
-    dir = tempfile.mkdtemp()
+    model_path = tempfile.mkdtemp(dir=MODEL_DIR)
     time_limits = max_mins * 60
     metric = "roc_auc"
     predictor = task.fit(
         train_data=train,
         label=Y_TARGET,
-        output_directory=dir,
+        output_directory=model_path,
         eval_metric=metric,
         time_limits=time_limits,
         presets="best_quality",
@@ -221,9 +241,7 @@ def train_autogluon():
     mlflow.log_metric("val_auc", val_auc)
     mlflow.log_metric("test_auc", test_auc)
 
-    mlflow.end_run()
-
-    return dir
+    return model_path
 
 
 if __name__ == "__main__":

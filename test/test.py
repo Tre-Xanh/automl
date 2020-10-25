@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import requests
 from h2o.frame import H2OFrame
-
-from automl.config import TEST_CSV, logger
+from loguru import logger
+from automl.config import TEST_CSV
 
 
 def read_dftest():
@@ -29,13 +29,13 @@ def test_load_model():
     dftest = read_dftest()
 
     PRE_MODEL = os.getenv("PRE_MODEL")
-    H2O_MODEL = os.getenv("H2O_MODEL")
+    ML_MODEL = os.getenv("ML_MODEL")
     logger.info(
         f"""Model paths:
     PRE_MODEL {PRE_MODEL}
-    H2O_MODEL {H2O_MODEL}"""
+    ML_MODEL {ML_MODEL}"""
     )
-    assert PRE_MODEL and H2O_MODEL
+    assert PRE_MODEL and ML_MODEL
 
     # %% MLflowとH2OAutoMLで保存したモデルをリロードして予測結果を比較
     pred_mlflow = reload_mlflow_predict(dftest)
@@ -43,7 +43,7 @@ def test_load_model():
 
     pre_model = joblib.load(PRE_MODEL)
     hf_input = H2OFrame(pre_model.transform(dftest))
-    reloaded_h2o = h2o.load_model(H2O_MODEL)
+    reloaded_h2o = h2o.load_model(ML_MODEL)
     predictions_h2o = reloaded_h2o.predict(hf_input).as_data_frame()
     logger.info(f"predictions_h2o\n{predictions_h2o}")
 
@@ -60,9 +60,14 @@ def test_api():
         headers={"Content-type": "application/json"},
     )
 
-    pred_api = pd.DataFrame(res.json())
+    pred_api = np.array(res.json())
+    logger.info(pred_api)
 
     pred_mlflow = reload_mlflow_predict(dftest)
-    assert pred_api.predict.equals(pred_mlflow.predict)
+    logger.info(pred_mlflow)
+    logger.info(pred_api - pred_mlflow)
+    logger.info(np.abs(pred_api - pred_mlflow).max())
 
-    assert ((pred_api - pred_mlflow).abs() <= np.finfo(float).eps).all(axis=None)
+    eps = 0.0007
+    eps = np.finfo(float).eps
+    assert np.abs(pred_api - pred_mlflow).max() <= eps
