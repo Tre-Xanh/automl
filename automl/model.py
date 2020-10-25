@@ -6,7 +6,6 @@ from pathlib import Path
 import h2o
 import joblib
 import mlflow
-from mlflow.entities import run
 import mlflow.h2o
 import mlflow.pyfunc
 import pandas as pd
@@ -17,7 +16,16 @@ from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-from .config import DATA_URI, PROCESSED_DATA_DIR, TEST_CSV, TMP_DIR, Y_TARGET, logger, PRJ_DIR
+from automl.config import (
+    DATA_URI,
+    MODEL_DIR,
+    PROCESSED_DATA_DIR,
+    TEST_CSV,
+    TMP_DIR,
+    Y_TARGET,
+    logger,
+    max_mins,
+)
 
 
 class Preproc:
@@ -48,44 +56,6 @@ class Preproc:
         return model_path
 
 
-# import autogluon.core as ag
-from autogluon.tabular import TabularPrediction as task
-
-max_mins = 1
-
-
-def gluon_fit(train: pd.DataFrame, test: pd.DataFrame) -> str:
-
-    train = task.Dataset(train)
-    logger.debug(train.head())
-    dir = tempfile.mkdtemp()
-    time_limits = max_mins * 60
-    metric = "roc_auc"
-    predictor = task.fit(
-        train_data=train,
-        label=Y_TARGET,
-        output_directory=dir,
-        eval_metric=metric,
-        time_limits=time_limits,
-        presets="best_quality",
-    )
-    predictor.fit_summary()
-    val_auc = predictor.info()["best_model_score_val"]
-
-    test = task.Dataset(test)
-    logger.debug(test.head())
-    test_auc = predictor.evaluate(test)
-
-    logger.info("val_auc {}, test_auc {}", val_auc, test_auc)
-
-    mlflow.log_param("algos", "AutoGluon")
-    mlflow.log_param("max_mins", max_mins)
-    mlflow.log_metric("val_auc", val_auc)
-    mlflow.log_metric("test_auc", test_auc)
-
-    return dir
-
-
 def h2o_fit(train: H2OFrame, test: H2OFrame) -> str:
     x = train.columns
     y = Y_TARGET
@@ -110,9 +80,11 @@ def h2o_fit(train: H2OFrame, test: H2OFrame) -> str:
     mlflow.log_metric("val_auc", val_auc)
     mlflow.log_metric("test_auc", test_auc)
 
-    mlflow.h2o.log_model(aml.leader, "model")
+    # mlflow.h2o.log_model(aml.leader, "model")
 
-    model_path = h2o.save_model(model=aml.leader, path=tempfile.mkdtemp(), force=True)
+    model_path = tempfile.mkdtemp(dir=MODEL_DIR)
+    model_path = h2o.save_model(model=aml.leader, path=model_path)
+    logger.debug(f"h2o.save_model to {model_path} DONE")
     return model_path
 
 
@@ -149,23 +121,19 @@ def preprocess(csv=DATA_URI):
     # %% データ前処理
     prep = Preproc()
     train = prep.fit_transform(dftrain)
-    pre_model = prep.save_model(PROCESSED_DATA_DIR/"prep.model")
+    pre_model = prep.save_model(PROCESSED_DATA_DIR / "prep.model")
     test = prep.transform(dftest)
-    train.to_csv(PROCESSED_DATA_DIR/"train.csv", index=False)
-    test.to_csv(PROCESSED_DATA_DIR/"test.csv", index=False)
+    train.to_csv(PROCESSED_DATA_DIR / "train.csv", index=False)
+    test.to_csv(PROCESSED_DATA_DIR / "test.csv", index=False)
     return train, test, pre_model
 
-
-def gluon_pipeline(train: pd.DataFrame, test: pd.DataFrame, pre_model: Preproc):
-    mlflow.start_run()
-    gluon_fit(train, test)
-    mlflow.end_run()
 
 def read_processed_data():
-    train = pd.read_csv(PROCESSED_DATA_DIR/"train.csv")
-    test = pd.read_csv(PROCESSED_DATA_DIR/"test.csv")
-    pre_model = str(PROCESSED_DATA_DIR/"prep.model")
+    train = pd.read_csv(PROCESSED_DATA_DIR / "train.csv")
+    test = pd.read_csv(PROCESSED_DATA_DIR / "test.csv")
+    pre_model = str(PROCESSED_DATA_DIR / "prep.model")
     return train, test, pre_model
+
 
 def train_h2o():
     """A pipeline to
@@ -182,7 +150,7 @@ def train_h2o():
 
     # %% MLflowで学習済みの前処理・モデルを保存
     conda_env = "./conda.yml"
-    code_path = ["."]  # 重要：ローカル Python ソースコードの所在地
+    code_path = ["automl"]  # 重要：ローカル Python ソースコードの所在地
     artifacts = dict(
         pre_model=pre_model,
         #
@@ -190,6 +158,7 @@ def train_h2o():
     )
 
     artifact_path = "pyfunc"
+    logger.debug(f"mlflow.pyfunc.log_model {artifacts} ... ")
     mlflow.pyfunc.log_model(
         artifact_path=artifact_path,
         python_model=H2OPredictor(),
@@ -197,6 +166,7 @@ def train_h2o():
         artifacts=artifacts,
         conda_env=conda_env,
     )
+    logger.debug(f"mlflow.pyfunc.log_model ... DONE")
     mlflow_model = mlflow.get_artifact_uri(artifact_path)
     prefix = "file://"
     if mlflow_model.startswith(prefix):
@@ -206,20 +176,55 @@ def train_h2o():
 
     pre_model = Path(mlflow_model) / "artifacts" / os.path.basename(pre_model)
     h2o_model = Path(mlflow_model) / "artifacts" / os.path.basename(h2o_model)
-    (TMP_DIR / "run_env.sh").write_text(f"""
+    (TMP_DIR / "run_env.sh").write_text(
+        f"""
 set -a
 MLFLOW_MODEL={mlflow_model}
 PRE_MODEL={pre_model}
 H2O_MODEL={h2o_model}
-PYTHONPATH={mlflow_model}/code/automl/src
+PYTHONPATH={mlflow_model}/code
 TESTPATH={mlflow_model}/code/automl/test
-""")
+"""
+    )
 
 
 def train_autogluon():
+    from autogluon.tabular import TabularPrediction as task
+
+    mlflow.start_run()
     train, test, pre_model = read_processed_data()
-    gluon_pipeline(train, test, pre_model)
+
+    train = task.Dataset(train)
+    logger.debug(train.head())
+    dir = tempfile.mkdtemp()
+    time_limits = max_mins * 60
+    metric = "roc_auc"
+    predictor = task.fit(
+        train_data=train,
+        label=Y_TARGET,
+        output_directory=dir,
+        eval_metric=metric,
+        time_limits=time_limits,
+        presets="best_quality",
+    )
+    predictor.fit_summary()
+    val_auc = predictor.info()["best_model_score_val"]
+
+    test = task.Dataset(test)
+    logger.debug(test.head())
+    test_auc = predictor.evaluate(test)
+
+    logger.info("val_auc {}, test_auc {}", val_auc, test_auc)
+
+    mlflow.log_param("algos", "AutoGluon")
+    mlflow.log_param("max_mins", max_mins)
+    mlflow.log_metric("val_auc", val_auc)
+    mlflow.log_metric("test_auc", test_auc)
+
+    mlflow.end_run()
+
+    return dir
 
 
 if __name__ == "__main__":
-    train_h2o()
+    train_autogluon()

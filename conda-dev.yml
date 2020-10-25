@@ -6,10 +6,9 @@ dependencies:
   - python=3.6
   - ipykernel
   - pip
-  - pip:
-    - autoflake
-    - black
-    - flake8
-    - isort
-    - jupyter
-    - pytest
+  - autoflake
+  - black
+  - flake8
+  - isort
+  - jupyter
+  - pytest

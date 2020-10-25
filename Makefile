@@ -1,28 +1,30 @@
 SHELL := /bin/bash
 
-all: train_h2o
+all: serve_h2o
 train_h2o: tmp/run_env.sh
-tmp/run_env.sh: src/*.py train_data
+tmp/run_env.sh: automl/*.py train_data
 	mlflow run . -e train_h2o
 
-train_autogluon: src/*.py train_data
+train_autogluon: automl/*.py train_data
 	mlflow run . -e train_autogluon
 
-train_data: data/processed/train.csv
+train_data: data/processed/train.csv data/preprocess/test.csv
 data/processed/train.csv:
+data/preprocess/test.csv:
+automl/test/data/dftest.csv:
 	mlflow run . -e preprocess
 
-serve:
+serve_h2o: train_h2o
 	. tmp/run_env.sh && scripts/mlflow_serve.sh
 
-test:
-	. tmp/run_env.sh && pytest test/test.py
+test: automl/test/data/dftest.csv
+	. tmp/run_env.sh && pytest automl/test/test.py
 	
-test_load_model:
-	. tmp/run_env.sh && pytest test/test.py::test_load_model
+test_load_model: automl/test/data/dftest.csv
+	. tmp/run_env.sh && pytest automl/test/test.py::test_load_model
 	
-test_api:
-	. tmp/run_env.sh && pytest test/test.py::test_api
+test_api: automl/test/data/dftest.csv
+	. tmp/run_env.sh && pytest automl/test/test.py::test_api
 
 devenv: conda*.yml
 	conda env update -f conda-dev.yml
