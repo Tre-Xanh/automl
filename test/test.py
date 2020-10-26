@@ -44,10 +44,10 @@ def test_load_model():
     pre_model = joblib.load(PRE_MODEL)
     hf_input = H2OFrame(pre_model.transform(dftest))
     reloaded_h2o = h2o.load_model(ML_MODEL)
-    predictions_h2o = reloaded_h2o.predict(hf_input).as_data_frame()
+    predictions_h2o = reloaded_h2o.predict(hf_input).as_data_frame()["p0"].values
     logger.info(f"predictions_h2o\n{predictions_h2o}")
 
-    assert predictions_h2o.equals(pred_mlflow)
+    assert np.equal(predictions_h2o, pred_mlflow).all()
 
 
 def test_api():
