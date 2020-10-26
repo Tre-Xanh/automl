@@ -1,4 +1,8 @@
 import os
+import warnings
+
+warnings.simplefilter("ignore", category=DeprecationWarning)
+warnings.simplefilter("ignore", category=RuntimeWarning)
 
 import h2o
 import joblib
@@ -25,31 +29,6 @@ def reload_mlflow_predict(dftest):
     return pred_mlflow
 
 
-def test_load_model():
-    dftest = read_dftest()
-
-    PRE_MODEL = os.getenv("PRE_MODEL")
-    ML_MODEL = os.getenv("ML_MODEL")
-    logger.info(
-        f"""Model paths:
-    PRE_MODEL {PRE_MODEL}
-    ML_MODEL {ML_MODEL}"""
-    )
-    assert PRE_MODEL and ML_MODEL
-
-    # %% MLflowとH2OAutoMLで保存したモデルをリロードして予測結果を比較
-    pred_mlflow = reload_mlflow_predict(dftest)
-    logger.info(f"pred_mlflow\n{pred_mlflow}")
-
-    pre_model = joblib.load(PRE_MODEL)
-    hf_input = H2OFrame(pre_model.transform(dftest))
-    reloaded_h2o = h2o.load_model(ML_MODEL)
-    predictions_h2o = reloaded_h2o.predict(hf_input).as_data_frame()["p0"].values
-    logger.info(f"predictions_h2o\n{predictions_h2o}")
-
-    assert np.equal(predictions_h2o, pred_mlflow).all()
-
-
 def test_api():
     dftest = read_dftest()
 
@@ -60,14 +39,21 @@ def test_api():
         headers={"Content-type": "application/json"},
     )
 
-    pred_api = np.array(res.json())
-    logger.info(pred_api)
+    preds = pd.DataFrame(
+        dict(
+            pred_api=pd.DataFrame(res.json())["proba"],
+            pred_mlflow=reload_mlflow_predict(dftest)["proba"],
+        )
+    )
+    preds["pred_diff"] = preds.pred_api - preds.pred_mlflow
+    print(preds)
+    if (preds["pred_diff"] != 0).any():
+        logger.warning(
+            f"""nonzero_diff
+{preds[preds["pred_diff"] != 0]}
+in #{preds.shape[0]} samples
+"""
+        )
 
-    pred_mlflow = reload_mlflow_predict(dftest)
-    logger.info(pred_mlflow)
-    logger.info(pred_api - pred_mlflow)
-    logger.info(np.abs(pred_api - pred_mlflow).max())
-
-    eps = 0.0007
     eps = np.finfo(float).eps
-    assert np.abs(pred_api - pred_mlflow).max() <= eps
+    assert preds["pred_diff"].abs().max() <= eps

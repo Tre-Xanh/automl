@@ -15,11 +15,15 @@ https://github.com/vochicong/automl
 
 ---
 
+![bg contain](out/UML/UML.png)
+
+---
+
 # 概要
 
 * データ: [タイタニック号乗客の生存](https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv)
 * [Pandas](https://pandas.pydata.org/)で前処理
-* [H2O AutoML](http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html?highlight=automl)で機械学習
+* [H2O AutoML](http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html?highlight=automl)や[AutoGluon](https://github.com/awslabs/autogluon)で機械学習
 * [MLflow custom model](https://mlflow.org/docs/latest/models.html#example-saving-an-xgboost-model-in-mlflow-format)で前処理と学習・予測をつなげる :notes:
 * [MLflow models serve](https://mlflow.org/docs/latest/models.html#deploy-mlflow-models)で予測RESTサービス
 
@@ -32,6 +36,10 @@ https://github.com/vochicong/automl
 ``` bash
 make devenv
 ```
+
+なお、 AutoGluon は Python 3.6 だと mlflow serving で予測するときと、
+mlflowの保存済みモデルで予測するときとで、予測結果（確率）に差異が見られました。
+そのため、Python 3.7 を使っています。
 
 ---
 

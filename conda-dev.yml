@@ -1,14 +1,14 @@
-name: automl
 channels:
   - defaults
   - auto
 dependencies:
-  - python=3.6
+  - python=3.7
   - ipykernel
-  - pip
-  - autoflake
   - black
   - flake8
   - isort
   - jupyter
   - pytest
+  - pip
+  - pip:
+    - autoflake

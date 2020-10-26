@@ -1,9 +1,11 @@
 # %%
-import os
 import tempfile
-from pathlib import Path
+import warnings
 
-import h2o
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import h2o
+
 import joblib
 import mlflow
 import mlflow.h2o
@@ -13,16 +15,13 @@ from h2o import H2OFrame
 from h2o.automl import H2OAutoML
 from h2o.frame import H2OFrame
 from loguru import logger
-from pandas import DataFrame
 
 from automl.config import (
-    DATA_URI,
+    MAX_TRAIN_SECS,
     MODEL_DIR,
     PROCESSED_DATA_DIR,
-    TEST_CSV,
     TMP_DIR,
     Y_TARGET,
-    max_mins,
 )
 
 
@@ -35,7 +34,7 @@ def h2o_fit(train: H2OFrame, test: H2OFrame) -> str:
     train[y] = train[y].asfactor()
     test[y] = test[y].asfactor()
 
-    aml = H2OAutoML(max_runtime_secs=max_mins * 60)
+    aml = H2OAutoML(max_runtime_secs=MAX_TRAIN_SECS)
     aml.train(x=x, y=y, training_frame=train)
 
     # View the AutoML Leaderboard
@@ -46,7 +45,7 @@ def h2o_fit(train: H2OFrame, test: H2OFrame) -> str:
 
     logger.info("val_auc {}, test_auc {}", val_auc, test_auc)
     mlflow.log_param("algos", "H2OAutoML")
-    mlflow.log_param("max_mins", max_mins)
+    mlflow.log_param("max_secs", MAX_TRAIN_SECS)
     mlflow.log_metric("val_auc", val_auc)
     mlflow.log_metric("test_auc", test_auc)
 
@@ -65,16 +64,17 @@ class H2OPredictor(mlflow.pyfunc.PythonModel):
         self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
         self.ml_model = h2o.load_model(context.artifacts["ml_model"])
 
-    def predict(self, context, df_input: DataFrame) -> pd.DataFrame:
+    def predict(self, context, df_input: pd.DataFrame) -> pd.DataFrame:
         hf_input = H2OFrame(self.pre_model.transform(df_input))
         output: H2OFrame = self.ml_model.predict(hf_input)
-        return output.as_data_frame()["p0"].values
+        proba = output.as_data_frame()["p0"].values
+        return pd.DataFrame({"proba": proba})
 
 
 def read_processed_data():
     train = pd.read_csv(PROCESSED_DATA_DIR / "train.csv")
     test = pd.read_csv(PROCESSED_DATA_DIR / "test.csv")
-    pre_model = str(PROCESSED_DATA_DIR / "prep.model")
+    pre_model = str(MODEL_DIR / "prep.model")
     return train, test, pre_model
 
 
@@ -122,14 +122,10 @@ def log_model(pre_model, ml_model, python_model):
 
     mlflow.end_run()
 
-    pre_model = Path(mlflow_model) / "artifacts" / os.path.basename(pre_model)
-    ml_model = Path(mlflow_model) / "artifacts" / os.path.basename(ml_model)
     (TMP_DIR / "run_env.sh").write_text(
         f"""
 set -a
 MLFLOW_MODEL={mlflow_model}
-PRE_MODEL={pre_model}
-ML_MODEL={ml_model}
 PYTHONPATH={mlflow_model}/code
 TESTPATH={mlflow_model}/code/test
 """
@@ -152,10 +148,10 @@ class AutoGluonPredictor(mlflow.pyfunc.PythonModel):
         self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
         self.ml_model = task.load(context.artifacts["ml_model"])
 
-    def predict(self, context, input: DataFrame) -> pd.DataFrame:
+    def predict(self, context, input: pd.DataFrame) -> pd.DataFrame:
         input = self.pre_model.transform(input)
-        output = self.ml_model.predict_proba(input)
-        return output
+        proba = self.ml_model.predict_proba(input)
+        return pd.DataFrame({"proba": proba})
 
 
 def fit_autogluon(train: pd.DataFrame, test: pd.DataFrame) -> str:
@@ -164,7 +160,7 @@ def fit_autogluon(train: pd.DataFrame, test: pd.DataFrame) -> str:
     train = task.Dataset(train)
     logger.debug(train.head())
     model_path = tempfile.mkdtemp(dir=MODEL_DIR)
-    time_limits = max_mins * 60
+    time_limits = MAX_TRAIN_SECS
     metric = "roc_auc"
     predictor = task.fit(
         train_data=train,
@@ -184,12 +180,8 @@ def fit_autogluon(train: pd.DataFrame, test: pd.DataFrame) -> str:
     logger.info("val_auc {}, test_auc {}", val_auc, test_auc)
 
     mlflow.log_param("algos", "AutoGluon")
-    mlflow.log_param("max_mins", max_mins)
+    mlflow.log_param("max_secs", MAX_TRAIN_SECS)
     mlflow.log_metric("val_auc", val_auc)
     mlflow.log_metric("test_auc", test_auc)
 
     return model_path
-
-
-if __name__ == "__main__":
-    train_autogluon()

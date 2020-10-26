@@ -1,11 +1,12 @@
-name: automl
 channels:
   - defaults
   - anaconda
   - conda-forge
+  # - h2oai
 dependencies:
-  - python=3.6
-  - bokeh==2.0.1
+  - python=3.7
+  - bokeh
+  # - h2o=3.30.0.4
   - joblib
   - loguru
   - openjdk

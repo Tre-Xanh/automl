@@ -1,0 +1,18 @@
+@startuml
+skinparam defaultFontName Osaka
+' scale 2
+' left to right direction
+' title mlflowを使った学習・予測
+actor "AI開発者" as trainer
+actor "APIユーザ" as user
+trainer -> "MLflow tracking" as mlflow: 実験を開始
+mlflow <-> "MLflow serving" as serving: Artifacts連携
+trainer -> preprocess: 学習・テストデータ前処理
+trainer -> model: MLモデル学習 (fit)
+trainer -> mlflow: 前処理モデル+MLモデルを保存
+trainer -> serving: 保存したモデルを指定して予測REST APIサービスを開始
+user -> serving: 予測対象データJSON
+serving -> preprocess: データ前処理
+serving -> model: 予測
+serving -> user: 予測結果JSON
+@enduml

@@ -1,5 +1,5 @@
-import tempfile
 from pathlib import Path
+from typing import Union
 
 import joblib
 import pandas as pd
@@ -7,7 +7,7 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-from automl.config import DATA_URI, PROCESSED_DATA_DIR, TEST_CSV
+from automl.config import DATA_URI, MODEL_DIR, PROCESSED_DATA_DIR, TEST_CSV
 
 
 class Preproc:
@@ -32,8 +32,7 @@ class Preproc:
         self.fit(df)
         return self.transform(df)
 
-    def save_model(self, model_path=None) -> str:
-        model_path = model_path or os.path.join(tempfile.mkdtemp(), "prep.model")
+    def save_model(self, model_path: Union[Path, str]) -> str:
         joblib.dump(self, model_path)
         return model_path
 
@@ -56,7 +55,7 @@ def preprocess(csv=DATA_URI):
     # %% データ前処理
     prep = Preproc()
     train = prep.fit_transform(dftrain)
-    pre_model = prep.save_model(PROCESSED_DATA_DIR / "prep.model")
+    pre_model = prep.save_model(MODEL_DIR / "prep.model")
     test = prep.transform(dftest)
     train.to_csv(PROCESSED_DATA_DIR / "train.csv", index=False)
     test.to_csv(PROCESSED_DATA_DIR / "test.csv", index=False)

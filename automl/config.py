@@ -4,7 +4,8 @@ DATA_URI: str = (
     "https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv"
 )
 Y_TARGET = "Survived"
-max_mins = 1
+
+MAX_TRAIN_SECS = 30
 
 PRJ_DIR = Path(__file__).parents[1]
 DATA_DIR = PRJ_DIR / "data"
