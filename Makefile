@@ -5,7 +5,9 @@ MLFLOW_RUN = mlflow run . --no-conda
 
 all: train serve
 train: train_autogluon
-train_h2o tmp/run_env.sh: $(SRC) $(DATA)
+tmp/run_env.sh: $(SRC) $(DATA)
+	$(MAKE) train
+train_h2o: $(SRC) $(DATA)
 	$(MLFLOW_RUN) -e train_h2o
 
 train_autogluon: $(SRC) $(DATA)

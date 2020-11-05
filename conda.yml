@@ -16,5 +16,6 @@ dependencies:
   - pip
   - pip:
       - h2o
-      - mxnet
+      # - mxnet_cu101<2.0.0
+      - mxnet<2.0.0
       - autogluon.tabular
