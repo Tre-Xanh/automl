@@ -15,11 +15,15 @@ https://github.com/vochicong/automl
 
 ---
 
+![bg contain](out/UML/UML.png)
+
+---
+
 # 概要
 
 * データ: [タイタニック号乗客の生存](https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv)
 * [Pandas](https://pandas.pydata.org/)で前処理
-* [H2O AutoML](http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html?highlight=automl)で機械学習
+* [H2O AutoML](http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html?highlight=automl)や[AutoGluon](https://github.com/awslabs/autogluon)で機械学習
 * [MLflow custom model](https://mlflow.org/docs/latest/models.html#example-saving-an-xgboost-model-in-mlflow-format)で前処理と学習・予測をつなげる :notes:
 * [MLflow models serve](https://mlflow.org/docs/latest/models.html#deploy-mlflow-models)で予測RESTサービス
 
@@ -30,13 +34,12 @@ https://github.com/vochicong/automl
 [Conda](https://docs.conda.io/en/latest/miniconda.html)で環境作成
 
 ``` bash
-conda env update -f conda-dev.yml
-conda env update -f conda.yml
-
-conda activate automl
-python --version # Python 3.8.5 など
-java -version # openjdk version "1.8.0_152-release" など
+make devenv
 ```
+
+なお、 AutoGluon は Python 3.6 だと mlflow serving で予測するときと、
+mlflowの保存済みモデルで予測するときとで、予測結果（確率）に差異が見られました。
+そのため、Python 3.7 を使っています。
 
 ---
 
@@ -52,24 +55,17 @@ java -version # openjdk version "1.8.0_152-release" など
 前処理・機械学習・テスト予測の実行
 
 ``` bash
-mlflow run src
+make train
 ```
 
 ---
 
 # 予測APIサービスの起動
 
-`mlflow run` コマンドが数分で終わると、予測APIの起動コマンド例が出力されるので、コピーして使えます。デフォルトで5000番ポートが使われます。
+デフォルトで5000番ポートが使われます。
 
 ``` bash
-export PRE_MODEL=/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmprjpjxzop/prep.model
-export H2O_MODEL=/private/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmp_vttg3fb/XGBoost_grid__1_AutoML_20200823_165516_model_8
-export MLFLOW_MODEL=/var/folders/j5/1fzcsqzd2_j1s3_5d3qm447h0000gn/T/tmpe3kwn77z/main.model
-export PYTHONPATH=src
-
-pytest test/test.py::test_load_model
-
-mlflow models serve -m $MLFLOW_MODEL
+make serve
 ```
 
 ## 予測API用Dockerイメージ
@@ -85,11 +81,10 @@ mlflow models build-docker -m $MLFLOW_MODEL
 # 予測APIテスト
 
 ``` bash
-export PYTHONPATH=src
-pytest test/test.py::test_api
+make test
 ```
 
-同じテストデータにしたして、APIを使って予測させる場合と、
+同じテストデータに対して、APIを使って予測させる場合と、
 `main.py` でモデルを直接ロードして予測させる場合とを比較して、
 同じ予測結果になることを確認します
 
@@ -108,7 +103,8 @@ Request
 
 Response（分類問題）
 
+分類の確率
+
 ``` json
-[ { "predict": 0, "p0": 0.7, "p1": 0.3 },
-  { "predict": 1, "p0": 0.6, "p1": 0.4 } ]
+[ 0.7, 0.6 ]
 ```

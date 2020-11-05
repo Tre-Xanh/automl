@@ -1,6 +1,8 @@
-**/*.csv
+**/data/*
 **/mlruns
 **/.DS_Store
 **/*-checkpoint.ipynb
 **/*.pyc
 tmp/*
+.vscode/settings.json
+models/*

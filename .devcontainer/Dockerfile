@@ -14,10 +14,10 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends gcc python3-dev
+    && apt-get -y install --no-install-recommends gcc make python3-dev
 
 RUN which conda && conda update -n base -c defaults conda
-COPY conda.yml ./
-RUN conda env update -f conda.yml || true
 COPY conda-dev.yml ./
-RUN pip uninstall typing; conda env update -f conda-dev.yml || true
+RUN pip uninstall typing; conda env update -f conda-dev.yml -n base
+COPY conda.yml ./
+RUN conda env update -f conda.yml -n base

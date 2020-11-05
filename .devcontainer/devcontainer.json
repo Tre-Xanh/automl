@@ -1,21 +1,15 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.140.1/containers/python-3-miniconda
 {
-	"name": "MLflow+AutoML",
+	"name": "AutoML",
 	"context": "..",
 	"dockerFile": "Dockerfile",
-	// Set *default* container specific settings.json values on container create.
-	"settings": {
-		"terminal.integrated.shell.linux": "/bin/bash",
-		"python.pythonPath": "/opt/conda/bin/python",
-		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": true,
-		"python.linting.pylintPath": "/opt/conda/bin/pylint"
-	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-		"ms-python.python",
-		"ms-python.vscode-pylance"
+		"ms-azuretools.vscode-docker",
+		// "ms-python.python",
+		"ms-python.vscode-pylance",
+		"vscodevim.vim"
 	]
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
