@@ -1,20 +1,15 @@
+from typing import List
+
 import mlflow
-import pandas as pd
 from loguru import logger
 
-from automl.config import MODEL_DIR, PRJ_DIR, PROCESSED_DATA_DIR
+from common.config import PRJ_DIR
 
 
-def read_processed_data():
-    train = pd.read_csv(PROCESSED_DATA_DIR / "train.csv")
-    test = pd.read_csv(PROCESSED_DATA_DIR / "test.csv")
-    pre_model = str(MODEL_DIR / "prep.model")
-    return train, test, pre_model
-
-
-def log_model(pre_model, ml_model, python_model):
+def log_model(
+    pre_model, ml_model, predictor_model, predictor_code: List[str], conda_env: str
+):
     # %% MLflowで学習済みの前処理・モデルを保存
-    conda_env = "./conda.yml"
     artifacts = dict(
         pre_model=pre_model,
         #
@@ -22,12 +17,14 @@ def log_model(pre_model, ml_model, python_model):
     )
 
     artifact_path = "automl"
-    logger.debug(f"mlflow.pyfunc.log_model {artifacts} ... ")
+    logger.debug(artifacts)
+    logger.debug(conda_env)
     mlflow_model_info = dict(
         artifact_path=artifact_path,
-        python_model=python_model,
+        python_model=predictor_model,
         artifacts=artifacts,
         conda_env=conda_env,
+        code_path=predictor_code,
     )
     mlflow.pyfunc.log_model(**mlflow_model_info)
     logger.info(f"mlflow log_model {mlflow_model_info}")

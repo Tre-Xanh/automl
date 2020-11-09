@@ -2,25 +2,24 @@
 import tempfile
 import warnings
 
-from automl.common import log_model
-from automl.preprocess import read_processed_data
+from h2o_mlflow_predictor import H2OPredictor
+
+from common.mlflow_util import log_model
+from common.preprocess import read_processed_data
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import h2o
 
-import joblib
 import mlflow
 import mlflow.h2o
 import mlflow.pyfunc
-import pandas as pd
-from loguru import logger
-
-from automl.config import MAX_TRAIN_SECS, MODEL_DIR, Y_TARGET
-from automl.preprocess import Preproc
 from h2o import H2OFrame
 from h2o.automl import H2OAutoML
 from h2o.frame import H2OFrame
+from loguru import logger
+
+from common.config import MAX_TRAIN_SECS, MODEL_DIR, PRJ_DIR, Y_TARGET
 
 
 def h2o_fit(train: H2OFrame, test: H2OFrame) -> str:
@@ -55,20 +54,6 @@ def h2o_fit(train: H2OFrame, test: H2OFrame) -> str:
     return model_path
 
 
-class H2OPredictor(mlflow.pyfunc.PythonModel):
-    def load_context(self, context):
-        h2o.init()
-        logger.info(f"artifacts {context.artifacts}")
-        self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
-        self.ml_model = h2o.load_model(context.artifacts["ml_model"])
-
-    def predict(self, context, df_input: pd.DataFrame) -> pd.DataFrame:
-        hf_input = H2OFrame(self.pre_model.transform(df_input))
-        output: H2OFrame = self.ml_model.predict(hf_input)
-        proba = output.as_data_frame()["p0"].values
-        return pd.DataFrame({"proba": proba})
-
-
 def train_h2o():
     """A pipeline to
     - Read CSV and preprocess data
@@ -82,4 +67,13 @@ def train_h2o():
     h2o.init()
     ml_model = h2o_fit(H2OFrame(train), H2OFrame(test))
 
-    log_model(pre_model, ml_model, H2OPredictor())
+    log_model(
+        pre_model,
+        ml_model,
+        H2OPredictor(),
+        [
+            str(PRJ_DIR / "scorer/h2o_mlflow_predictor.py"),
+            str(PRJ_DIR / "scorer/preproc_base.py"),
+        ],
+        str(PRJ_DIR / "h2o_mlflow/conda.yml"),
+    )

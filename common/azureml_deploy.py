@@ -1,9 +1,14 @@
+import os
+
 import azureml.core
 import mlflow
 import mlflow.azureml
 from azureml.core import Workspace
 from azureml.core.webservice import AciWebservice, Webservice
+from dotenv import load_dotenv
 from loguru import logger
+
+from common.config import PRJ_DIR
 
 
 def get_workspace():
@@ -34,8 +39,8 @@ def build_image(model_uri, exp_name: str, ws: Workspace):
 
 
 def deploy_image(model_image, exp_name, ws: Workspace):
-    logger.info("image {}", model_image)
-    websvc_deploy_cfg = AciWebservice.deploy_configuration()
+    logger.info("model_image {}", model_image)
+    websvc_deploy_cfg = AciWebservice.deploy_configuration(cpu_cores=1, memory_gb=2)
     websvc = Webservice.deploy_from_image(
         image=model_image,
         name=exp_name,
@@ -48,16 +53,17 @@ def deploy_image(model_image, exp_name, ws: Workspace):
     return websvc
 
 
-# https://docs.microsoft.com/en-us/azure/machine-learning/how-to-use-environments
-# from azureml.core.environment import Environment
+def main():
+    load_dotenv(dotenv_path=PRJ_DIR / ".trained.env", override=True)
+    model_uri = os.getenv("MLFLOW_MODEL")
+    exp_name = os.getenv("EXPERIMENT", "azureml-mlflow")
 
-# azure_env = Environment.from_conda_specification(
-#     name=expName, file_path="conda.yml"
-# )
-# azure_env.docker.enabled = True
-# azure_env
-# azure_env.register(workspace=ws)
-# from azureml.core import Image
-# build = azure_env.build(workspace=ws)  # build on Azure
-# # build = azure_env.build_local(workspace=ws, useDocker=True, pushImageToWorkspaceAcr=True)
-# build.wait_for_completion(show_output=True)
+    ws = get_workspace()
+    model_image = build_image(model_uri, exp_name, ws)
+    websvc = deploy_image(model_image, exp_name, ws)
+    (PRJ_DIR / ".deployed.env").write_text(f"SCORING_URI={websvc.scoring_uri}")
+    return websvc.scoring_uri
+
+
+if __name__ == "__main__":
+    main()

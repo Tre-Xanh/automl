@@ -1,45 +1,28 @@
-import joblib
 import mlflow
 import pandas as pd
+from autogluon_mlflow_predictor import AutoGluonPredictor
 from loguru import logger
 
-from automl.common import log_model, read_processed_data
-from automl.config import MAX_TRAIN_SECS, MODEL_DIR, Y_TARGET
-from automl.preprocess import Preproc
+from common.config import MAX_TRAIN_SECS, MODEL_DIR, PRJ_DIR, Y_TARGET
+from common.mlflow_util import log_model
+from common.preprocess import read_processed_data
 
 
 def train_autogluon():
     mlflow.start_run()
     train, test, pre_model = read_processed_data()
     ml_model = fit_autogluon(train, test)
-    log_model(pre_model, ml_model, AutoGluonPredictor())
+    log_model(
+        pre_model,
+        ml_model,
+        AutoGluonPredictor(),
+        [
+            str(PRJ_DIR / "scorer/autogluon_mlflow_predictor.py"),
+            str(PRJ_DIR / "scorer/preproc_base.py"),
+        ],
+        str(PRJ_DIR / "autogluon_mlflow/conda.yml"),
+    )
     mlflow.end_run()
-
-def unpack_model_zip(ml_model_zip: str) -> str:
-    import tempfile
-    from shutil import unpack_archive
-    ml_model_dir = tempfile.mkdtemp()
-    unpack_archive(ml_model_zip, extract_dir=ml_model_dir)
-    return ml_model_dir
-
-class AutoGluonPredictor(mlflow.pyfunc.PythonModel):
-    def load_context(self, context):
-
-        from autogluon.tabular import TabularPrediction as task
-
-        logger.info(f"artifacts {context.artifacts}")
-        self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
-
-        ml_model = unpack_model_zip(context.artifacts["ml_model"])
-        self.ml_model = task.load(ml_model)
-
-        # Keeping models in memory. BUG: loading deleted models
-        # self.ml_model.persist_models()
-
-    def predict(self, context, input: pd.DataFrame) -> pd.DataFrame:
-        input = self.pre_model.transform(input)
-        proba = self.ml_model.predict_proba(input)
-        return pd.DataFrame({"proba": proba})
 
 
 def optimize_for_deploy(predictor):
@@ -85,3 +68,7 @@ def fit_autogluon(train: pd.DataFrame, test: pd.DataFrame) -> str:
     make_archive(ml_model_dir, "zip", root_dir=ml_model_dir)
     ml_model_zip = str(ml_model_dir) + ".zip"
     return ml_model_zip
+
+
+if __name__ == "__main__":
+    train_autogluon()
