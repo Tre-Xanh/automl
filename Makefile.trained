@@ -1,0 +1,20 @@
+include .trained.env
+export
+
+DOCKER_NAME=automl
+
+list_artifacts:
+	tree $(MLFLOW_MODEL)
+
+serve: 
+	mlflow models serve -m $(MLFLOW_MODEL)
+
+test:
+	# pytest automl/test.py
+	mlflow run . -e test
+
+build_docker:
+	mlflow models build-docker -m $(MLFLOW_MODEL) -n $(DOCKER_NAME) --install-mlflow
+
+serve_docker:
+	docker run -p 5001:8080 $(DOCKER_NAME)

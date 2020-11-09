@@ -4,14 +4,12 @@ import warnings
 warnings.simplefilter("ignore", category=DeprecationWarning)
 warnings.simplefilter("ignore", category=RuntimeWarning)
 
-import h2o
-import joblib
 import mlflow.pyfunc
 import numpy as np
 import pandas as pd
 import requests
-from h2o.frame import H2OFrame
 from loguru import logger
+
 from automl.config import TEST_CSV
 
 
