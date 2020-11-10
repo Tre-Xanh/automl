@@ -1,7 +1,7 @@
 include .env
 export
 
-# SHELL := /bin/bash
+SHELL := /bin/bash
 SRC = */*.py
 DATA = data/processed/train.csv data/test/dftest.csv
 PREP_MODEL = models/prep.model
@@ -22,7 +22,7 @@ preproc $(DATA) $(PREP_MODEL): common/preprocess.py
 	$(MLFLOW_RUN) common -e preprocess
 
 devenv: conda*.yml
-	conda env update -f conda.yml
+	for e in */conda.yml; do conda env update -f $$e; done
 	conda env update -f conda-dev.yml
 	python --version
 	gcc --version
