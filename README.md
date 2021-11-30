@@ -31,10 +31,10 @@ https://github.com/vochicong/automl
 
 # 開発環境の準備
 
-[Conda](https://docs.conda.io/en/latest/miniconda.html)で環境作成
+[Mamba/Conda](https://github.com/mamba-org/mamba)で環境作成
 
 ``` bash
-make devenv
+make train-env
 ```
 
 なお、 AutoGluon は Python 3.6 だと mlflow serving で予測するときと、
