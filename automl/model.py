@@ -142,11 +142,11 @@ def train_autogluon():
 
 class AutoGluonPredictor(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
-        from autogluon.tabular import TabularPrediction as task
+        from autogluon.tabular import TabularPredictor
 
         logger.info(f"artifacts {context.artifacts}")
         self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
-        self.ml_model = task.load(context.artifacts["ml_model"])
+        self.ml_model = TabularPredictor.load(context.artifacts["ml_model"])
 
     def predict(self, context, input: pd.DataFrame) -> pd.DataFrame:
         input = self.pre_model.transform(input)
@@ -155,28 +155,27 @@ class AutoGluonPredictor(mlflow.pyfunc.PythonModel):
 
 
 def fit_autogluon(train: pd.DataFrame, test: pd.DataFrame) -> str:
-    from autogluon.tabular import TabularPrediction as task
+    from autogluon.tabular import TabularPredictor, TabularDataset
 
-    train = task.Dataset(train)
+    train = TabularDataset(train)
     logger.debug(train.head())
     model_path = tempfile.mkdtemp(dir=MODEL_DIR)
-    time_limits = MAX_TRAIN_SECS
-    metric = "roc_auc"
-    predictor = task.fit(
-        train_data=train,
+    predictor = TabularPredictor(
         label=Y_TARGET,
-        output_directory=model_path,
-        eval_metric=metric,
-        time_limits=time_limits,
-        presets="best_quality",
+        path=model_path,
+    ).fit(
+        train_data=train,
+        time_limit=MAX_TRAIN_SECS,
     )
     predictor.fit_summary()
     val_auc = predictor.info()["best_model_score_val"]
 
-    test = task.Dataset(test)
+    test = TabularDataset(test)
     logger.debug(test.head())
-    test_auc = predictor.evaluate(test)
+    test_eval = predictor.evaluate(test)
+    logger.info("test_eval {}", test_eval)
 
+    test_auc = test_eval["roc_auc"]
     logger.info("val_auc {}, test_auc {}", val_auc, test_auc)
 
     mlflow.log_param("algos", "AutoGluon")

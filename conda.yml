@@ -18,4 +18,4 @@ dependencies:
       - h2o
       # - mxnet_cu101<2.0.0
       - mxnet<2.0.0
-      - autogluon.tabular
+      - autogluon.tabular==0.3.1
