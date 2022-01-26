@@ -8,10 +8,7 @@ paginate: true
 MLflow で実験のパラメータ、メトリックや学習済みモデルの記録については、情報が豊富に見つかりますが、しかし前処理と学習・予測を一連の処理としてパイプライン化する、分かりやすい簡単なサンプルが見つからなかったので、作ってみました。
 
 よって、このサンプルでは、前処理と学習・予測のパイプライン化に重点を置きます。
-また、MLflowで簡単に予測サービス(REST)を立ち上げられることについても少し触れます。
-
-ソースコードはこちら
-https://github.com/vochicong/automl
+また、予測サービス(REST)を簡単に立ち上げられることについても少し触れます。
 
 ---
 
@@ -34,28 +31,40 @@ https://github.com/vochicong/automl
 [Mamba/Conda](https://github.com/mamba-org/mamba)で環境作成
 
 ``` bash
-make train-env
+cat .env.sample >> .env
+conda create -n automl conda-forge::mamba
+conda activate automl
+
+make devenv
 ```
 
-なお、 AutoGluon は Python 3.6 だと mlflow serving で予測するときと、
-mlflowの保存済みモデルで予測するときとで、予測結果（確率）に差異が見られました。
-そのため、Python 3.7 を使っています。
+なお、 Python や各種ライブラリのバージョンによっては `mlflow serving` で予測するときと、
+mlflowの保存済みモデルで予測するときとで、予測結果（確率）に差異が見られるので注意が必要です。
 
 ---
 
-# コード
+# データ前処理
 
-`main.py` にコードが全部入っています。
-
-* Preproc: データ前処理のクラス
-  + Age, Fareの Min-Maxスケーリング
-* h2o_fit: H2OAutoMLで学習
-* H2OPredictor: H2OAutoMLで予測
-
-前処理・機械学習・テスト予測の実行
+試しに Age, Fareの Min-Maxスケーリング
 
 ``` bash
-make train
+make preproc
+```
+
+---
+
+# AutoML で自動学習
+
+## H2OAutoML で学習
+
+``` bash
+make train_h2o
+```
+
+## AutoGluon で学習
+
+``` bash
+make train_autogluon
 ```
 
 ---
@@ -65,27 +74,29 @@ make train
 デフォルトで5000番ポートが使われます。
 
 ``` bash
-make serve
+make -f Makefile.trained serve
 ```
 
-## 予測API用Dockerイメージ
-
-簡単に作れます
+または、 予測API用MLflow Dockerイメージを作れます。
 
 ``` bash
-mlflow models build-docker -m $MLFLOW_MODEL
+make -f Makefile.trained build_docker serve_docker
 ```
 
----
-
-# 予測APIテスト
+## 上記サービスに対するテスト
 
 ``` bash
-make test
+make -f Makefile.trained test_h2o
+```
+
+または
+
+``` bash
+make -f Makefile.trained test_autogluon
 ```
 
 同じテストデータに対して、APIを使って予測させる場合と、
-`main.py` でモデルを直接ロードして予測させる場合とを比較して、
+モデルを直接ロードして予測させる場合とを比較して、
 同じ予測結果になることを確認します
 
 ---
