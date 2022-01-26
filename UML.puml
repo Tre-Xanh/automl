@@ -11,20 +11,17 @@ participant preprocess
 participant "ML model" as model
 end box
 box "MLflow" #LightGreen
-participant "Tracking metrics/Logging artifacts" as mlflow
-end box
-box "AzureML" #LightBlue
+participant "Track metrics/Log artifacts" as mlflow
 participant "Models" as builder
-participant "Endpoints" as serving
+participant "Serving" as serving
 end box
 ' trainer -> mlflow: Start experiment
 trainer -> preprocess: Preprocess train/test data
 trainer -> model: Fit the ML model
 trainer -> mlflow: Log preproc and ML models
-trainer -> mlflow: mlflow.azureml.build_image of MLflow model
-mlflow -> builder: MLflow model
-trainer -> serving: Deploy AciWebservice (REST API) from Docker image
-serving -> builder: Get image
+mlflow -> builder: Save
+trainer -> serving: Deploy service (REST API)
+serving -> builder: Use
 user -> serving: Prediction data JSON
 ' serving -> preprocess: Preprocess prediction data
 ' serving -> model: Predict

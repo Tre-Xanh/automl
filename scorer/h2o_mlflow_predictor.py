@@ -3,7 +3,7 @@ import joblib
 import mlflow
 import pandas as pd
 from loguru import logger
-from preproc_base import Preproc
+from .preproc_base import Preproc
 
 
 class H2OPredictor(mlflow.pyfunc.PythonModel):

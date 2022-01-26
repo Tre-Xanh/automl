@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 from loguru import logger
-from preproc_base import Preproc
+from scorer.preproc_base import Preproc
 from sklearn.model_selection import train_test_split
 
 from common.config import DATA_URI, MODEL_DIR, PROCESSED_DATA_DIR, TEST_CSV

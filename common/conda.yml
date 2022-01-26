@@ -3,11 +3,11 @@ channels:
   - anaconda
   - conda-forge
 dependencies:
-  - python=3.6.10 # match AzureML base image
+  - python=3.9
+  - mlflow=1.23
+  - pandas=1.3
   - joblib
   - loguru
-  - mlflow=1.11.0
-  - pandas
   - scikit-learn
   - python-dotenv
   - pytest

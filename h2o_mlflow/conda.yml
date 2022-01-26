@@ -3,15 +3,14 @@ channels:
   - anaconda
   - conda-forge
 dependencies:
-  - python=3.6.10 # match AzureML base image
+  - python=3.9
+  - mlflow=1.23
+  - pandas=1.3
+  - h2oai::h2o=3.30
+  - openjdk=11.0
   - joblib
   - loguru
-  - openjdk
-  - mlflow=1.11.0
-  - pandas
   - scikit-learn
   - python-dotenv
   - pytest
-  - pip=20.1.1
-  - pip:
-      - h2o
+  - pip

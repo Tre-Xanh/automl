@@ -2,7 +2,7 @@ import joblib
 import mlflow
 import pandas as pd
 from loguru import logger
-from preproc_base import Preproc
+from .preproc_base import Preproc
 
 
 def unpack_model_zip(ml_model_zip: str) -> str:
@@ -17,7 +17,7 @@ def unpack_model_zip(ml_model_zip: str) -> str:
 class AutoGluonPredictor(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
 
-        from autogluon.tabular import TabularPrediction as task
+        from autogluon.tabular import TabularPredictor as task
 
         logger.info(f"artifacts {context.artifacts}")
         self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
@@ -30,5 +30,9 @@ class AutoGluonPredictor(mlflow.pyfunc.PythonModel):
 
     def predict(self, context, input: pd.DataFrame) -> pd.DataFrame:
         input = self.pre_model.transform(input)
-        proba = self.ml_model.predict_proba(input)
+        proba: pd.DataFrame = self.ml_model.predict_proba(input)
+        logger.debug(f"proba\n{proba}")
+        logger.debug(f"proba columns\n{proba.columns}")
+        assert 0 in proba.columns
+        proba = proba[0].values
         return pd.DataFrame({"proba": proba})

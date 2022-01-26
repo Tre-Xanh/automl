@@ -1,6 +1,6 @@
 import mlflow
 import pandas as pd
-from autogluon_mlflow_predictor import AutoGluonPredictor
+from scorer.autogluon_mlflow_predictor import AutoGluonPredictor
 from loguru import logger
 
 from common.config import MAX_TRAIN_SECS, MODEL_DIR, PRJ_DIR, Y_TARGET
@@ -16,10 +16,7 @@ def train_autogluon():
         pre_model,
         ml_model,
         AutoGluonPredictor(),
-        [
-            str(PRJ_DIR / "scorer/autogluon_mlflow_predictor.py"),
-            str(PRJ_DIR / "scorer/preproc_base.py"),
-        ],
+        [str(PRJ_DIR / "scorer"),],
         str(PRJ_DIR / "autogluon_mlflow/conda.yml"),
     )
     mlflow.end_run()
@@ -34,27 +31,22 @@ def optimize_for_deploy(predictor):
 def fit_autogluon(train: pd.DataFrame, test: pd.DataFrame) -> str:
     from shutil import make_archive
 
-    from autogluon.tabular import TabularPrediction as task
+    from autogluon.tabular import TabularPredictor as task
 
     train = task.Dataset(train)
     logger.debug(train.head())
     ml_model_dir = MODEL_DIR / "autogluon"
-    time_limits = MAX_TRAIN_SECS
+    time_limit = MAX_TRAIN_SECS
     metric = "roc_auc"
-    predictor = task.fit(
-        train_data=train,
-        label=Y_TARGET,
-        output_directory=ml_model_dir,
-        eval_metric=metric,
-        time_limits=time_limits,
-        presets="best_quality",
+    predictor = task(label=Y_TARGET, path=ml_model_dir, eval_metric=metric).fit(
+        train_data=train, time_limit=time_limit, presets="best_quality",
     )
     predictor.fit_summary()
     val_auc = predictor.info()["best_model_score_val"]
 
     test = task.Dataset(test)
     logger.debug(test.head())
-    test_auc = predictor.evaluate(test)
+    test_auc = predictor.evaluate(test)[metric]
 
     logger.info("val_auc {}, test_auc {}", val_auc, test_auc)
 

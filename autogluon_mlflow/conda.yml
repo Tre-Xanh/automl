@@ -3,19 +3,16 @@ channels:
   - anaconda
   - conda-forge
 dependencies:
-  - python=3.6.10 # match AzureML base image
-  - bokeh
+  - python=3.9
+  - mlflow=1.23
+  - pandas=1.3
   - joblib
   - loguru
   - gcc_linux-64
-  - mlflow=1.11.0
-  - pandas
   - scikit-learn
   - python-dotenv
-  - pip=20.1.1
+  - pip
   - pip:
       # - mxnet_cu101<2.0.0
       - mxnet<2.0.0
-      - autogluon.tabular==0.0.15b20201105
-      - azureml-mlflow
-      - azureml-core==1.17.0
+      - autogluon.tabular==0.3.2b20220126

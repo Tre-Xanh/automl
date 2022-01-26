@@ -8,10 +8,7 @@ paginate: true
 MLflow で実験のパラメータ、メトリックや学習済みモデルの記録については、情報が豊富に見つかりますが、しかし前処理と学習・予測を一連の処理としてパイプライン化する、分かりやすい簡単なサンプルが見つからなかったので、作ってみました。
 
 よって、このサンプルでは、前処理と学習・予測のパイプライン化に重点を置きます。
-また、予測サービス(REST)をAzureMLなどに簡単に立ち上げられることについても少し触れます。
-
-ソースコードはこちら
-https://github.com/vochicong/automl
+また、予測サービス(REST)を簡単に立ち上げられることについても少し触れます。
 
 ---
 
@@ -34,6 +31,10 @@ https://github.com/vochicong/automl
 [Conda](https://docs.conda.io/en/latest/miniconda.html)で環境作成
 
 ``` bash
+cat .env.sample >> .env
+conda create -n automl conda-forge::mamba
+conda activate automl
+
 make devenv
 ```
 
@@ -85,28 +86,18 @@ make -f Makefile.trained build_docker serve_docker
 ## 上記サービスに対するテスト
 
 ``` bash
-make -f Makefile.trained test
+make -f Makefile.trained test_h2o
+```
+
+または
+
+``` bash
+make -f Makefile.trained test_autogluon
 ```
 
 同じテストデータに対して、APIを使って予測させる場合と、
 モデルを直接ロードして予測させる場合とを比較して、
 同じ予測結果になることを確認します
-
----
-
-# AzureML への予測サービスデプロイ
-
-## AzureML への予測モデル登録 & エンドポイントデプロイ
-
-``` bash
-make -f Makefile.trained azureml_deploy
-```
-
-## 上記サービスに対するテスト
-
-``` bash
-make -f Makefile.trained test_azureml_deploy
-```
 
 ---
 

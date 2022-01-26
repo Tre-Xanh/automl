@@ -11,5 +11,4 @@ dependencies:
   - pip
   - pip:
     - autoflake
-    - azureml-sdk
     - python-dotenv

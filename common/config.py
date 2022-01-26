@@ -6,7 +6,7 @@ DATA_URI: str = (
 )
 Y_TARGET = "Survived"
 
-MAX_TRAIN_SECS = 10
+MAX_TRAIN_SECS = 20
 
 PRJ_DIR = Path(__file__).parents[1]
 DATA_DIR = PRJ_DIR / "data"

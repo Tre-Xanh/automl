@@ -2,7 +2,7 @@
 import tempfile
 import warnings
 
-from h2o_mlflow_predictor import H2OPredictor
+from scorer.h2o_mlflow_predictor import H2OPredictor
 
 from common.mlflow_util import log_model
 from common.preprocess import read_processed_data
@@ -71,9 +71,6 @@ def train_h2o():
         pre_model,
         ml_model,
         H2OPredictor(),
-        [
-            str(PRJ_DIR / "scorer/h2o_mlflow_predictor.py"),
-            str(PRJ_DIR / "scorer/preproc_base.py"),
-        ],
+        [str(PRJ_DIR / "scorer"),],
         str(PRJ_DIR / "h2o_mlflow/conda.yml"),
     )
