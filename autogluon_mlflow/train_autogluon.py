@@ -1,11 +1,11 @@
 import mlflow
 import pandas as pd
-from scorer.autogluon_mlflow_predictor import AutoGluonPredictor
 from loguru import logger
 
 from common.config import MAX_TRAIN_SECS, MODEL_DIR, PRJ_DIR, Y_TARGET
 from common.mlflow_util import log_model
 from common.preprocess import read_processed_data
+from scorer.autogluon_mlflow_predictor import AutoGluonPredictor
 
 
 def train_autogluon():

@@ -2,10 +2,9 @@
 import tempfile
 import warnings
 
-from scorer.h2o_mlflow_predictor import H2OPredictor
-
 from common.mlflow_util import log_model
 from common.preprocess import read_processed_data
+from scorer.h2o_mlflow_predictor import H2OPredictor
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
