@@ -28,7 +28,7 @@ MLflow で実験のパラメータ、メトリックや学習済みモデルの�
 
 # 開発環境の準備
 
-[Conda](https://docs.conda.io/en/latest/miniconda.html)で環境作成
+[Mamba/Conda](https://github.com/mamba-org/mamba)で環境作成
 
 ``` bash
 cat .env.sample >> .env
