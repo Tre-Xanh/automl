@@ -10,12 +10,12 @@ import pandas as pd
 import requests
 from loguru import logger
 
-from common.config import TEST_CSV
+from common.config import TEST_CSV, Y_TARGET_
 
 
 def read_dftest():
     dftest = pd.read_csv(TEST_CSV)
-    dftest.drop("Survived", axis="columns", inplace=True)
+    dftest.drop(columns=Y_TARGET_, inplace=True)
     return dftest
 
 
