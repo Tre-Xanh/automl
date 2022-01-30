@@ -6,6 +6,8 @@ import pandas as pd
 from loguru import logger
 from sklearn.preprocessing import MinMaxScaler
 
+from common.config import RENAME_COLS
+
 
 class Preproc:
     SCALE_COLS = ["Age", "Fare"]
@@ -22,6 +24,7 @@ class Preproc:
         df = df.drop("Name", axis="columns")
         logger.debug(f"MinMaxScaler transform {self.SCALE_COLS}")
         df[self.SCALE_COLS] = self.scaler.transform(df[self.SCALE_COLS])
+        df.rename(columns=RENAME_COLS, inplace=True)
         logger.debug(f"df head\n{df.head()}")
         return df
 
