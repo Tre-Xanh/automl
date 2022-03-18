@@ -24,22 +24,15 @@ MLflow で実験のパラメータ、メトリックや学習済みモデルの�
 * [MLflow custom model](https://mlflow.org/docs/latest/models.html#example-saving-an-xgboost-model-in-mlflow-format)で前処理と学習・予測をつなげる :notes:
 * [MLflow models serve](https://mlflow.org/docs/latest/models.html#deploy-mlflow-models)で予測RESTサービス
 
+なお、 Python や各種ライブラリのバージョンによっては `mlflow serving` で予測するときと、
+mlflowの保存済みモデルで予測するときとで、予測結果（確率）に差異が見られるので注意が必要です。
+
 ---
 
 # 開発環境の準備
 
-[Mamba/Conda](https://github.com/mamba-org/mamba)で環境作成
-
-``` bash
-cat .env.sample >> .env
-conda create -n automl conda-forge::mamba
-conda activate automl
-
-make devenv
-```
-
-なお、 Python や各種ライブラリのバージョンによっては `mlflow serving` で予測するときと、
-mlflowの保存済みモデルで予測するときとで、予測結果（確率）に差異が見られるので注意が必要です。
+`.devcontainer/Dockerfile` で
+[Mamba/Conda](https://github.com/mamba-org/mamba)環境作成
 
 ---
 

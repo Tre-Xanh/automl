@@ -1,6 +1,7 @@
 channels:
   - defaults
   - auto
+  - conda-forge
 dependencies:
   - ipykernel
   - black
@@ -8,6 +9,7 @@ dependencies:
   - isort
   - jupyter
   - pytest
+  - mlflow
   - pip
   - pip:
     - autoflake
