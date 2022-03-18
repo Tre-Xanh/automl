@@ -20,7 +20,7 @@ def preprocess(csv=DATA_URI):
     logger.info(f"train_test_split {data.shape} -> {dftrain.shape} + {dftest.shape}")
 
     # Save test dataframe for later tests
-    Path("../data").mkdir(exist_ok=True)
+    Path("./data").mkdir(exist_ok=True)
     dftest.to_csv(TEST_CSV, index=False)
 
     # %% データ前処理

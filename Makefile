@@ -22,11 +22,9 @@ preproc $(DATA) $(PREP_MODEL): common/preprocess.py
 	$(MLFLOW_RUN) common -e preprocess
 
 devenv: conda*.yml
-	for e in */conda.yml; do mamba env update -f $$e; done
 	mamba env update -f conda-dev.yml
 	python --version
 	gcc --version
-	java -version
 
 cleancode:
 	bash scripts/clean_code.sh
