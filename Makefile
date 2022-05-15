@@ -5,9 +5,10 @@ SHELL := /bin/bash
 SRC = */*.py
 DATA = data/processed/train.csv data/test/dftest.csv
 PREP_MODEL = models/prep.model
-MLFLOW_RUN = mlflow run
+DEV_ENV ?= automl
+MLFLOW_RUN = mamba run -n $(DEV_ENV) mlflow run
 
-all: train serve
+all: train
 train: train_autogluon
 tmp/run_env.sh: $(SRC) $(DATA)
 	$(MAKE) train
@@ -22,7 +23,7 @@ preproc $(DATA) $(PREP_MODEL): common/preprocess.py
 	$(MLFLOW_RUN) common -e preprocess
 
 devenv: conda*.yml
-	mamba env update -f conda-dev.yml
+	mamba env update -f conda-dev.yml -n $(DEV_ENV)
 	python --version
 	gcc --version
 
