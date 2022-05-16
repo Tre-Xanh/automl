@@ -42,6 +42,7 @@ export
 
 DOCKER_NAME=automl
 API_PORT?=5000
+CONTAINER_MODELS=container/models
 
 list_artifacts:
 	tree $(MLFLOW_AUTOGLUON)
@@ -49,7 +50,7 @@ list_artifacts:
 serve: serve_docker
 
 serve_model:
-	mlflow models serve -m $(MLFLOW_AUTOGLUON)
+	mlflow models serve -m $(MLFLOW_AUTOGLUON) --env-manager=local
 
 test: test_autogluon
 
@@ -60,6 +61,11 @@ test_autogluon:
 	mlflow run autogluon_mlflow -e test
 
 build_docker:
+	rm -Rf $(CONTAINER_MODELS)
+	mkdir -p $(CONTAINER_MODELS)
+	cp -R $(MLFLOW_AUTOGLUON) $(CONTAINER_MODELS)/MLFLOW_AUTOGLUON
+	cp -R $(MLFLOW_H2OAUTOML) $(CONTAINER_MODELS)/MLFLOW_H2OAUTOML
+	cp -R $(MLFLOW_COORDINATOR) $(CONTAINER_MODELS)/MLFLOW_COORDINATOR
 	docker-compose build
 
 serve_docker: build_docker
