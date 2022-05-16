@@ -7,15 +7,19 @@ from common.config import PRJ_DIR
 
 
 def log_model(
-    pre_model, ml_model, predictor_model, predictor_code: List[str], conda_env: str
+    pre_model,
+    ml_model,
+    predictor_model,
+    predictor_code: List[str],
+    conda_env: str,
+    model_name="MLFLOW_MODEL",
 ):
     # %% MLflowで学習済みの前処理・モデルを保存
-    artifacts = dict(
-        pre_model=pre_model,
-        #
-        ml_model=ml_model,
-    )
-
+    artifacts = {}
+    if pre_model:
+        artifacts["pre_model"] =pre_model
+    if ml_model:
+        artifacts["ml_model"] =ml_model
     artifact_path = "automl"
     logger.debug(artifacts)
     logger.debug(conda_env)
@@ -35,8 +39,5 @@ def log_model(
 
     mlflow.end_run()
 
-    (PRJ_DIR / ".trained.env").write_text(
-        f"""
-MLFLOW_MODEL={mlflow_model}
-""".strip()
-    )
+    with (PRJ_DIR / ".trained.env").open("a") as env_fp:
+        env_fp.write(f"""{model_name}={mlflow_model}\n""")

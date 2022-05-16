@@ -1,0 +1,6 @@
+name: automl
+conda_env: conda.yml
+
+entry_points:
+  log_gateway:
+    command: "cd ..; python -c 'from mlflow_gateway.log_gateway import log_gateway; log_gateway()'"

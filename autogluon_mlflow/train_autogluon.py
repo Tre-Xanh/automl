@@ -16,8 +16,12 @@ def train_autogluon():
         pre_model,
         ml_model,
         AutoGluonPredictor(),
-        [str(PRJ_DIR / "scorer"),],
+        [
+            str(PRJ_DIR / "scorer"),
+            str(PRJ_DIR / "common"),
+        ],
         str(PRJ_DIR / "autogluon_mlflow/conda.yml"),
+        model_name="MLFLOW_AUTOGLUON",
     )
     mlflow.end_run()
 

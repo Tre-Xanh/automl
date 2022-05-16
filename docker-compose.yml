@@ -1,0 +1,37 @@
+services:
+  predictor_a: &default
+    image: ${DOCKER_NAME}
+    environment:
+      - DISABLE_NGINX=true
+      - GUNICORN_CMD_ARGS=--bind=0.0.0.0:8000 --workers=${N_GUNICORN_WORKERS}
+    build:
+      context: container
+      dockerfile: Dockerfile
+    volumes:
+      - ${MLFLOW_AUTOGLUON}:/models
+      - logpredictor_a:/var/log
+    expose:
+      - "8000"
+  predictor_b:
+    <<: *default
+    volumes:
+      - ${MLFLOW_H2OAUTOML}:/models
+      - logpredictor_b:/var/log
+  gateway:
+    <<: *default
+    environment:
+      - GUNICORN_CMD_ARGS=--bind=0.0.0.0:8000 --workers=${N_GUNICORN_GATEWAYS}
+      - PREDICTOR_A_URI=http://predictor_a:8000/invocations
+      - PREDICTOR_B_URI=http://predictor_b:8000/invocations
+    volumes:
+      - ${MLFLOW_GATEWAY}:/models
+      - loggateway:/var/log
+    depends_on:
+      - predictor_a
+      - predictor_b
+    ports:
+      - "${API_PORT}:8000"
+volumes:
+  logpredictor_a: {}
+  logpredictor_b: {}
+  loggateway: {}

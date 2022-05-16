@@ -16,7 +16,7 @@ MLflow で実験のパラメータ、メトリックや学習済みモデルの�
 
 ---
 
-# 概要
+## 概要
 
 * データ: [タイタニック号乗客の生存](https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv)
 * [Pandas](https://pandas.pydata.org/)で前処理
@@ -29,14 +29,14 @@ mlflowの保存済みモデルで予測するときとで、予測結果（確�
 
 ---
 
-# 開発環境の準備
+## 開発環境の準備
 
 `.devcontainer/Dockerfile` で
 [Mamba/Conda](https://github.com/mamba-org/mamba)環境作成
 
 ---
 
-# データ前処理
+## データ前処理
 
 試しに Age, Fareの Min-Maxスケーリング
 序に、列名を日本語化して日本語の列名への対応をみる。
@@ -47,15 +47,15 @@ make preproc
 
 ---
 
-# AutoML で自動学習
+## AutoML で自動学習
 
-## H2OAutoML で学習
+### H2OAutoML で学習
 
 ``` bash
 make train_h2o
 ```
 
-## AutoGluon で学習
+### AutoGluon で学習
 
 ``` bash
 make train_autogluon
@@ -63,30 +63,30 @@ make train_autogluon
 
 ---
 
-# 予測APIサービスの起動
+## 予測APIサービスの起動
 
 デフォルトで5000番ポートが使われます。
 
 ``` bash
-make -f Makefile.trained serve
+make serve_model
 ```
 
-または、 予測API用MLflow Dockerイメージを作れます。
+または、 予測API用コンテナを作れます。
 
 ``` bash
-make -f Makefile.trained build_docker serve_docker
+make serve
 ```
 
-## 上記サービスに対するテスト
+### 上記サービスに対するテスト
 
 ``` bash
-make -f Makefile.trained test_h2o
+make test_h2o
 ```
 
 または
 
 ``` bash
-make -f Makefile.trained test_autogluon
+make test_autogluon
 ```
 
 同じテストデータに対して、APIを使って予測させる場合と、
@@ -95,7 +95,7 @@ make -f Makefile.trained test_autogluon
 
 ---
 
-# 参考）APIのJSON形式
+## 参考）APIのJSON形式
 
 Request
 
