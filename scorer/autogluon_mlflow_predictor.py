@@ -5,7 +5,6 @@ from loguru import logger
 
 from .preproc_base import Preproc
 
-
 def unpack_model_zip(ml_model_zip: str) -> str:
     import tempfile
     from shutil import unpack_archive
@@ -17,9 +16,9 @@ def unpack_model_zip(ml_model_zip: str) -> str:
 
 class AutoGluonPredictor(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
-
         from autogluon.tabular import TabularPredictor as task
 
+        logger.add("/app/log/autogluon_mlflow_{time}.log", rotation="00:00")
         logger.info(f"artifacts {context.artifacts}")
         self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
 

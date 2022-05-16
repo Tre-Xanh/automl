@@ -6,6 +6,7 @@ from common.mlflow_api import request_api
 
 class Coordinator(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
+        logger.add("/app/log/coordinator_mlflow_{time}.log", rotation="00:00")
         self.predictor_A = os.getenv("PREDICTOR_A_URI")
         self.predictor_B = os.getenv("PREDICTOR_B_URI")
         logger.info(f"PREDICTOR_A_URI {self.predictor_A}")
