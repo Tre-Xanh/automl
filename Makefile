@@ -9,12 +9,12 @@ DEV_ENV ?= automl
 MLFLOW_RUN = mamba run -n $(DEV_ENV) --no-capture-output --live-stream mlflow run
 
 all: preproc train
-train: train_autogluon train_h2o log_gateway
+train: train_autogluon train_h2o log_coordinator
 tmp/run_env.sh: $(SRC) $(DATA)
 	$(MAKE) train
 
-log_gateway:
-	$(MLFLOW_RUN) mlflow_gateway -e log_gateway
+log_coordinator:
+	$(MLFLOW_RUN) coordinator_mlflow -e log_coordinator
 
 train_h2o: $(SRC) $(DATA) $(PREP_MODEL)
 	$(MLFLOW_RUN) h2o_mlflow -e train_h2o
@@ -51,8 +51,7 @@ serve: serve_docker
 serve_model:
 	mlflow models serve -m $(MLFLOW_AUTOGLUON)
 
-test:
-	mlflow run common -e test
+test: test_autogluon
 
 test_h2o:
 	mlflow run h2o_mlflow -e test
@@ -64,10 +63,10 @@ build_docker:
 	docker-compose build
 
 serve_docker: build_docker
-	docker-compose up --remove-orphans --no-recreate
+	docker-compose up --remove-orphans # --no-recreate
 
 scale_docker:
-	docker-compose scale predictorA=3 predictorB=3 gateway=1
+	docker-compose scale predictorA=3 predictorB=3 coordinator=1
 
 down:
 	docker-compose down

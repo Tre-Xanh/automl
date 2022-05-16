@@ -1,0 +1,6 @@
+name: automl
+conda_env: conda.yml
+
+entry_points:
+  log_coordinator:
+    command: "cd ..; python -c 'from coordinator_mlflow.log_coordinator import log_coordinator; log_coordinator()'"
