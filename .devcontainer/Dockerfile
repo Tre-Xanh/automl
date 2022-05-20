@@ -6,8 +6,9 @@ FROM mcr.microsoft.com/vscode/devcontainers/miniconda:0-3
 ARG NODE_VERSION="none"
 RUN if [ "${NODE_VERSION}" != "none" ]; then su vscode -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
-COPY conda-dev.yml /tmp/conda-tmp/
-RUN conda install -y conda-forge::mamba && umask 0002 && mamba env update -n base -f /tmp/conda-tmp/conda-dev.yml && rm -rf /tmp/conda-tmp
+RUN conda install -y -n base -c conda-forge mamba
+COPY conda-dev.yml /tmp/
+RUN mamba env update -n automl -f /tmp/conda-dev.yml
 
 # [Optional] Uncomment to install a different version of Python than the default
 # RUN conda install -y python=3.6 \

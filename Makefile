@@ -50,7 +50,7 @@ list_artifacts:
 serve: serve_docker
 
 serve_model:
-	mlflow models serve -m $(MLFLOW_AUTOGLUON) --env-manager=local
+	mlflow models serve -m $(MLFLOW_AUTOGLUON)
 
 test: test_autogluon
 

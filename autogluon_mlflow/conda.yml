@@ -1,9 +1,9 @@
 channels:
-  - defaults
   - anaconda
   - conda-forge
 dependencies:
-  - python>=3.8
+  - python>=3.8,<3.10
+  - mxnet<2.0.0
   - mlflow=1.25
   - pandas=1.3
   - joblib
@@ -11,8 +11,6 @@ dependencies:
   # - gcc_linux-64
   - scikit-learn
   - python-dotenv
-  - pip
+  - pip #=21.2.4
   - pip:
-      # - mxnet_cu101<2.0.0
-      - mxnet<2.0.0
-      - autogluon.tabular==0.3.2b20220126
+      - autogluon.tabular>=0.4.0 # autogluon requires Py 3.7, 3.8 or 3.9
