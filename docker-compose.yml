@@ -7,8 +7,8 @@ services:
     environment:
       - DISABLE_NGINX=true
       - GUNICORN_CMD_ARGS=--bind=0.0.0.0:${GUNICORN_PORT} --workers=1
-    volumes:
-      - ./log:/app/log
+    # volumes:
+      # - ./log:/app/log
     expose:
       - ${GUNICORN_PORT}
   predictor_b:

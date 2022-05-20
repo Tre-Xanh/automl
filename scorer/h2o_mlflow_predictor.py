@@ -8,7 +8,7 @@ from .preproc_base import Preproc
 
 class H2OPredictor(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
-        logger.add("/app/log/h2oautoml_mlflow_{time}.log", rotation="00:00")
+        # logger.add("/app/log/h2oautoml_mlflow_{time}.log", rotation="00:00")
         h2o.init()
         logger.info(f"artifacts {context.artifacts}")
         self.pre_model: Preproc = joblib.load(context.artifacts["pre_model"])
