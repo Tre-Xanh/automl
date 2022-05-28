@@ -37,7 +37,7 @@ def test_reload_model():
 def test_api():
     scoring_uri = os.getenv("SCORING_URI", "http://127.0.0.1:5000/invocations")
     dftest = read_dftest()
-    pred_df = request_api(dftest, scoring_uri)
+    pred_df = request_api(df=dftest, scoring_uri=scoring_uri)
     pred_api = pred_df.iloc[:, 0]
     pred_mlflow = reload_mlflow_predict(dftest)["proba"]
     preds = pd.DataFrame(dict(pred_api=pred_api, pred_mlflow=pred_mlflow,))

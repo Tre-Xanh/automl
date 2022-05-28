@@ -3,14 +3,16 @@ channels:
   - auto
   - conda-forge
 dependencies:
-  - ipykernel
   - black
   - flake8
+  - ipykernel
   - isort
   - jupyter
-  - pytest
   - mlflow
   - pip
   - pip:
     - autoflake
     - python-dotenv
+    - httpx
+  - pytest
+  - python=3.8
