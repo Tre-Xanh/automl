@@ -2,5 +2,8 @@ name: automl
 conda_env: conda.yml
 
 entry_points:
-    preprocess:
-        command: "cd ..; python -c 'from common.preprocess import preprocess; preprocess()'"
+  preprocess:
+    command: "cd ..; python -c 'from common.preprocess import preprocess; preprocess()'"
+  test:
+    # command: "cd ..; PYTHONPATH=. pytest common/test.py"
+    command: "cd ..; PYTHONPATH=. python common/test.py"

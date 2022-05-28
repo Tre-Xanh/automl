@@ -1,16 +1,10 @@
 channels:
-  - defaults
-  - anaconda
   - conda-forge
 dependencies:
   - python=3.8
   - mlflow=1.25
   - pandas=1.3
-  - joblib
   - loguru
-  - scikit-learn
-  - python-dotenv
-  - pytest
   - pip
   - pip:
     - httpx

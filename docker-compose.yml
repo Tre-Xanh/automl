@@ -1,0 +1,36 @@
+services:
+  predictor_a: &default
+    build:
+      context: container
+      args:
+        - MODEL4CONTAINER=./models/MLFLOW_AUTOGLUON
+    environment:
+      - DISABLE_NGINX=true
+      - GUNICORN_CMD_ARGS=--bind=0.0.0.0:${GUNICORN_PORT} --workers=1
+      - LOGURU_LEVEL=INFO
+    # volumes:
+      # - ./log:/app/log
+    expose:
+      - ${GUNICORN_PORT}
+  predictor_b:
+    <<: *default
+    build:
+      context: container
+      args:
+        - MODEL4CONTAINER=./models/MLFLOW_H2OAUTOML
+  coordinator:
+    <<: *default
+    build:
+      context: container
+      args:
+        - MODEL4CONTAINER=./models/MLFLOW_COORDINATOR
+    environment:
+      - GUNICORN_CMD_ARGS=--bind=0.0.0.0:${GUNICORN_PORT} --workers=1
+      - PREDICTOR_A_URI=http://predictor_a:${GUNICORN_PORT}/invocations
+      - PREDICTOR_B_URI=http://predictor_b:${GUNICORN_PORT}/invocations
+      - LOGURU_LEVEL=INFO
+    depends_on:
+      - predictor_a
+      - predictor_b
+    ports:
+      - "${API_PORT}:${GUNICORN_PORT}"

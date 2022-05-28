@@ -70,6 +70,10 @@ def train_h2o():
         pre_model,
         ml_model,
         H2OPredictor(),
-        [str(PRJ_DIR / "scorer"),],
+        [
+            str(PRJ_DIR / "scorer"),
+            str(PRJ_DIR / "common"),
+        ],
         str(PRJ_DIR / "h2o_mlflow/conda.yml"),
+        model_name="MLFLOW_H2OAUTOML",
     )
